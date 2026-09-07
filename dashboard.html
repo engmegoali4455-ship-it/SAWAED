@@ -91,23 +91,6 @@ body.locked > *:not(.gate-overlay){display:none !important;}
   </div>
 
   <div class="card">
-    <h2>إدارة حسابات المشرفين</h2>
-    <div class="two-col">
-      <div class="field">
-        <label for="newEngName">اسم المشرف</label>
-        <input type="text" id="newEngName" placeholder="مثال: م. أحمد">
-      </div>
-      <div class="field">
-        <label for="newEngPhone">رقم هاتفه (واتساب)</label>
-        <input type="text" id="newEngPhone" placeholder="مثال: 201012345678">
-      </div>
-    </div>
-    <button class="btn" id="createEngBtn" type="button">إنشاء حساب برقم تعريفي</button>
-    <div id="engCreatedResult" class="hint" style="display:none;"></div>
-    <div id="engineersListWrap" style="margin-top:12px;"></div>
-  </div>
-
-  <div class="card">
     <h2>المتابعة والمراقبة</h2>
     <div class="severity-row">
       <div class="sev-opt active" data-range="today">اليوم</div>
@@ -204,73 +187,6 @@ function subscribeData(){
   });
 }
 
-async function loadAllEngineers(){
-  if(!db) return [];
-  try{
-    const snap = await db.collection('engineers').get();
-    return snap.docs.map(d => d.data());
-  }catch(e){ return []; }
-}
-async function generateUniqueEngineerId(){
-  for(let i=0;i<8;i++){
-    const candidate = String(Math.floor(1000 + Math.random()*9000));
-    try{
-      const doc = await db.collection('engineers').doc(candidate).get();
-      if(!doc.exists) return candidate;
-    }catch(e){ return candidate; }
-  }
-  return String(Date.now()).slice(-4);
-}
-async function renderEngineersList(){
-  const wrap = document.getElementById('engineersListWrap');
-  wrap.innerHTML = '<p class="hint">جارٍ التحميل...</p>';
-  const list = await loadAllEngineers();
-  if(list.length === 0){
-    wrap.innerHTML = '<p class="hint">لا يوجد مشرفون مسجلون بعد.</p>';
-    return;
-  }
-  wrap.innerHTML = `<table>
-    <tr><th>الرقم التعريفي</th><th>الاسم</th><th>الهاتف</th><th></th></tr>
-    ${list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(eng => `
-      <tr>
-        <td class="mono" style="text-align:center;font-weight:600;">${escapeHtml(eng.id||'')}</td>
-        <td>${escapeHtml(eng.name||'')}</td>
-        <td>${escapeHtml(eng.phone||'')}</td>
-        <td style="text-align:center;"><button type="button" class="del-link" data-del-eng="${escapeHtml(eng.id||'')}">حذف</button></td>
-      </tr>`).join('')}
-  </table>`;
-}
-document.getElementById('engineersListWrap').addEventListener('click', async (ev) => {
-  const btn = ev.target.closest('[data-del-eng]');
-  if(!btn) return;
-  if(!confirm('هل تريد حذف حساب هذا المشرف؟ لن يتمكن من الدخول بعد الحذف.')) return;
-  try{ await db.collection('engineers').doc(btn.getAttribute('data-del-eng')).delete(); }catch(e){}
-  renderEngineersList();
-});
-document.getElementById('createEngBtn').addEventListener('click', async () => {
-  const name = document.getElementById('newEngName').value.trim();
-  const phone = normalizePhone(document.getElementById('newEngPhone').value);
-  const resultBox = document.getElementById('engCreatedResult');
-  if(!name || phone.length < 8){
-    resultBox.style.display = 'block';
-    resultBox.textContent = 'من فضلك أدخل اسم المشرف ورقم هاتف صحيح.';
-    return;
-  }
-  const id = await generateUniqueEngineerId();
-  try{
-    await db.collection('engineers').doc(id).set({id, name, phone, createdAt: Date.now()});
-  }catch(e){
-    resultBox.style.display = 'block';
-    resultBox.textContent = 'تعذر إنشاء الحساب. تأكد من صلاحيات Firestore لمجموعة engineers.';
-    return;
-  }
-  resultBox.style.display = 'block';
-  resultBox.innerHTML = `تم إنشاء الحساب بنجاح — الرقم التعريفي: <strong class="mono" style="font-size:15px;">${id}</strong><br>أرسل هذا الرقم لـ${escapeHtml(name)} ليستخدمه عند فتح تطبيق تسجيل الملاحظات.`;
-  document.getElementById('newEngName').value = '';
-  document.getElementById('newEngPhone').value = '';
-  renderEngineersList();
-});
-
 let currentRange = 'today';
 document.querySelectorAll('.sev-opt[data-range]').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -294,14 +210,12 @@ async function renderDashboard(){
   document.getElementById('statDone').textContent = entries.filter(e=>entryStatusKey(e)==='done').length;
 
   const rangeEntries = inRange(entries, currentRange);
-  const engineersList = await loadAllEngineers();
   const rangeLabel = currentRange === 'today' ? 'اليوم' : currentRange === 'week' ? 'آخر 7 أيام' : 'كل الفترات';
 
   const byEngineer = {};
-  engineersList.forEach(eng => { byEngineer[eng.phone] = {name: eng.name, phone: eng.phone, count: 0}; });
   rangeEntries.forEach(e => {
-    const key = e.byPhone || ('name:' + (e.by || 'غير معروف'));
-    if(!byEngineer[key]) byEngineer[key] = {name: e.by || 'غير معروف', phone: e.byPhone || '', count: 0};
+    const key = e.by || 'غير معروف';
+    if(!byEngineer[key]) byEngineer[key] = {name: key, count: 0};
     byEngineer[key].count++;
   });
 
@@ -319,10 +233,10 @@ async function renderDashboard(){
   document.getElementById('dashboardContent').innerHTML = `
     <h3>نشاط المشرفين (${rangeLabel})</h3>
     <table>
-      <tr><th>الاسم</th><th>الهاتف</th><th>عدد الملاحظات</th></tr>
+      <tr><th>الاسم</th><th>عدد الملاحظات</th></tr>
       ${Object.values(byEngineer).sort((a,b)=>b.count-a.count).map(eng =>
-        `<tr><td>${escapeHtml(eng.name)}</td><td>${escapeHtml(eng.phone||'-')}</td><td>${eng.count}</td></tr>`
-      ).join('') || '<tr><td colspan="3">لا يوجد نشاط مسجل.</td></tr>'}
+        `<tr><td>${escapeHtml(eng.name)}</td><td>${eng.count}</td></tr>`
+      ).join('') || '<tr><td colspan="2">لا يوجد نشاط مسجل.</td></tr>'}
     </table>
     <h3>التوزيع حسب القسم</h3>
     <table>
@@ -444,7 +358,6 @@ function unlockDashboard(){
   document.getElementById('gateOverlay').style.display = 'none';
   subscribeData();
   renderDashboard();
-  renderEngineersList();
   renderDocumentLog();
 }
 

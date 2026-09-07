@@ -301,8 +301,8 @@ body.locked > *:not(.gate-overlay){display:none !important;}
   </div>
   <div class="gate-card" id="gateStepPhone" style="display:none;">
     <h2>تسجيل الدخول</h2>
-    <p>أدخل الرقم التعريفي الذي استلمته من مدير الفريق.</p>
-    <input type="text" id="gatePhoneInput" placeholder="الرقم التعريفي (مثال: 4821)" autocomplete="off" inputmode="numeric">
+    <p>اكتب اسمك ليظهر على الملاحظات التي تسجّلها.</p>
+    <input type="text" id="gatePhoneInput" placeholder="اسمك (مثال: م. أحمد)" autocomplete="off">
     <button type="button" id="gatePhoneSubmitBtn">دخول</button>
     <div class="gate-err" id="gatePhoneErr"></div>
   </div>
@@ -685,8 +685,6 @@ let entries = [];
 let currentSeverity = 'open';
 let currentPhoto = null;
 let sessionName = '';
-let sessionPhone = '';
-let sessionEngineerId = '';
 
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
 
@@ -872,7 +870,7 @@ function applyFilters(list){
   const q = document.getElementById('fSearch').value.trim().toLowerCase();
   return list.filter(e => {
     if(notesScope === 'mine'){
-      const mine = (sessionEngineerId && e.byId === sessionEngineerId) || (sessionPhone && e.byPhone === sessionPhone);
+      const mine = sessionName && e.by === sessionName;
       if(!mine) return false;
     }
     if(b && e.building !== b) return false;
@@ -999,8 +997,8 @@ document.getElementById('myRecordsAll').addEventListener('click', () => {
   render();
 });
 document.getElementById('myRecordsMine').addEventListener('click', () => {
-  if(!sessionEngineerId && !sessionPhone){
-    alert('سجّل الدخول برقمك التعريفي أولاً حتى تتمكن من فلترة سجلاتك الخاصة.');
+  if(!sessionName){
+    alert('سجّل الدخول باسمك أولاً حتى تتمكن من فلترة سجلاتك الخاصة.');
     return;
   }
   notesScope = 'mine';
@@ -1336,7 +1334,7 @@ document.getElementById('saveWorkBtn').addEventListener('click', async () => {
     building, floor, apt, location, dept, description,
     percentComplete: parseInt(wInPercent.value, 10) || 0,
     status: currentWorkStatus,
-    by: sessionName, byPhone: sessionPhone || '', byId: sessionEngineerId || '',
+    by: sessionName,
     photo: currentWorkPhoto,
     ts: now.getTime(),
     dateStr: now.toLocaleDateString('ar-EG', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})
@@ -1527,8 +1525,6 @@ saveBtn.addEventListener('click', async () => {
     id: uid(),
     building, floor, apt, location, dept, code, note,
     by: name,
-    byPhone: sessionPhone || '',
-    byId: sessionEngineerId || '',
     severity: currentSeverity,
     status: 'open',
     photo: currentPhoto,
@@ -2351,22 +2347,6 @@ function normalizePhone(p){
   return (p || '').replace(/[^0-9]/g, '');
 }
 
-async function findEngineerById(id){
-  if(db){
-    try{
-      const doc = await db.collection('engineers').doc(id).get();
-      return doc.exists ? doc.data() : null;
-    }catch(e){ return null; }
-  }
-  return null;
-}
-
-async function touchEngineerActivity(id){
-  if(db){
-    try{ await db.collection('engineers').doc(id).set({lastActive: Date.now()}, {merge:true}); }catch(e){}
-  }
-}
-
 /* ===================== سجل التقارير والمستندات ===================== */
 async function logDocument(type, refNo, details){
   if(!db) return;
@@ -2375,7 +2355,7 @@ async function logDocument(type, refNo, details){
     const now = new Date();
     await db.collection('document_log').doc(logId).set({
       id: logId, type, refNo: refNo || '', details: details || '',
-      by: sessionName || '', byId: sessionEngineerId || '',
+      by: sessionName || '',
       ts: now.getTime(),
       dateStr: now.toLocaleDateString('ar-EG', {day:'2-digit', month:'2-digit', year:'numeric'}) + ' ' + now.toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'})
     });
@@ -2411,38 +2391,15 @@ async function attemptGateLogin(){
 }
 
 async function attemptPhoneLogin(){
-  const idInput = document.getElementById('gatePhoneInput');
+  const nameInput = document.getElementById('gatePhoneInput');
   const errEl = document.getElementById('gatePhoneErr');
-  const btn = document.getElementById('gatePhoneSubmitBtn');
-  const id = normalizePhone(idInput.value);
-  if(id.length < 3){
-    errEl.textContent = 'من فضلك أدخل الرقم التعريفي.';
+  const name = nameInput.value.trim();
+  if(name.length < 2){
+    errEl.textContent = 'من فضلك اكتب اسمك.';
     return;
   }
-  btn.disabled = true;
-  const originalBtnText = btn.textContent;
-  btn.textContent = 'جارٍ الدخول...';
-  if(!db){
-    sessionName = 'مستخدم تجريبي (' + id + ')';
-    sessionPhone = '';
-    sessionEngineerId = id;
-    unlockApp();
-    return;
-  }
-  const existing = await findEngineerById(id);
-  btn.disabled = false;
-  btn.textContent = originalBtnText;
-  if(existing && existing.name){
-    sessionName = existing.name;
-    sessionPhone = existing.phone || '';
-    sessionEngineerId = id;
-    touchEngineerActivity(id);
-    unlockApp();
-    return;
-  }
-  errEl.textContent = 'رقم غير صحيح أو غير مسجّل. تواصل مع مدير الفريق لإنشاء حساب لك من لوحة التحكم.';
-  idInput.value = '';
-  idInput.focus();
+  sessionName = name;
+  unlockApp();
 }
 
 document.getElementById('gateSubmitBtn').addEventListener('click', attemptGateLogin);
