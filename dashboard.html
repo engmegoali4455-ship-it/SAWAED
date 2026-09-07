@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم مدير الفريق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --paper:#F1EEE9; --card:#FFFFFF; --ink:#231F1C; --ink-soft:#726A62; --line:#E0DAD2;
+  --brand:#E85E30; --brand-dark:#C94A22; --ink-deep:#221F1D;
+  --amber:#B9861A; --amber-bg:#F6E8C9; --red:#B23B2C; --red-bg:#F5DAD3; --green:#3F7A52; --green-bg:#DEEBE1;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Arabic',sans-serif;min-height:100vh;padding-bottom:60px;}
+.mono{font-family:'IBM Plex Mono','IBM Plex Sans Arabic',monospace;}
+.wrap{max-width:680px;margin:0 auto;padding:0 14px;}
+
+header.topbar{position:sticky;top:0;z-index:20;background:var(--ink-deep);color:#F1EEE9;padding:16px 14px;border-bottom:3px solid var(--brand);}
+header.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+header.topbar h1{font-size:16px;margin:0;font-weight:600;}
+header.topbar a{color:#F1EEE9;font-size:12px;text-decoration:underline;}
+
+.stat-row{display:flex;gap:8px;margin:14px 0;}
+.stat{flex:1;background:var(--ink-deep);color:#fff;border-radius:6px;padding:10px 8px;text-align:center;}
+.stat .num{font-size:19px;font-weight:600;font-family:'IBM Plex Mono';}
+.stat .lbl{font-size:11px;color:#C9BEB5;margin-top:2px;}
+
+.severity-row{display:flex;gap:8px;margin-bottom:14px;}
+.sev-opt{flex:1;text-align:center;padding:8px;border:1px solid var(--line);border-radius:4px;font-size:12.5px;cursor:pointer;background:var(--card);}
+.sev-opt.active{background:var(--amber-bg);border-color:var(--amber);color:var(--amber);font-weight:600;}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:14px;}
+.card h2{font-size:14.5px;margin:0 0 10px;color:var(--brand-dark);}
+.card h3{font-size:13px;margin:14px 0 6px;color:var(--ink);}
+.two-col{display:flex;gap:10px;}
+.field{margin-bottom:10px;flex:1;}
+.field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:600;}
+.field input, .field select{width:100%;font-family:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+.btn{width:100%;padding:11px;border-radius:5px;border:none;background:var(--brand);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:4px;}
+.btn.dark{background:var(--ink-deep);}
+.btn.outline{background:none;border:1px solid var(--line);color:var(--ink-soft);}
+.hint{font-size:11.5px;color:var(--ink-soft);margin-top:6px;line-height:1.6;}
+
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin-bottom:6px;}
+table th, table td{padding:6px 7px;border:1px solid var(--line);text-align:right;}
+table th{background:var(--paper);font-weight:600;}
+.del-link{background:none;border:none;color:var(--red);font-size:11px;cursor:pointer;text-decoration:underline;padding:0;}
+
+.gate-overlay{position:fixed;inset:0;z-index:999;background:var(--ink-deep);display:flex;align-items:center;justify-content:center;padding:20px;}
+.gate-card{background:var(--card);border-radius:10px;padding:28px 24px;max-width:340px;width:100%;text-align:center;}
+.gate-card h2{font-size:17px;margin:0 0 4px;}
+.gate-card p{font-size:12.5px;color:var(--ink-soft);margin:0 0 16px;}
+.gate-card input{width:100%;font-family:inherit;font-size:16px;text-align:center;padding:11px;border:1px solid var(--line);border-radius:6px;margin-bottom:10px;}
+.gate-card button{width:100%;padding:11px;border-radius:6px;border:none;background:var(--brand);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;}
+.gate-err{color:var(--red);font-size:12px;margin-top:8px;min-height:16px;}
+body.locked > *:not(.gate-overlay){display:none !important;}
+</style>
+</head>
+<body class="locked">
+
+<div class="gate-overlay" id="gateOverlay">
+  <div class="gate-card">
+    <h2>لوحة تحكم مدير الفريق</h2>
+    <p id="gateModeHint">سجّل الدخول بالإيميل وكلمة المرور الخاصين بك.</p>
+    <input type="email" id="gateEmailInput" placeholder="البريد الإلكتروني" autocomplete="username">
+    <input type="password" id="gatePasswordInput" placeholder="كلمة المرور" autocomplete="current-password">
+    <button type="button" id="gateSubmitBtn">تسجيل الدخول</button>
+    <button type="button" id="gateSignupBtn" style="background:none;color:var(--brand-dark);text-decoration:underline;margin-top:10px;font-size:12px;padding:4px;">لا تملك حسابًا؟ إنشاء حساب مدير جديد</button>
+    <div class="gate-err" id="gateErr"></div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <h1>لوحة تحكم مدير الفريق</h1>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a href="index.html">فتح التطبيق ↗</a>
+      <button type="button" id="logoutBtn" style="background:none;border:none;color:#F1EEE9;font-size:12px;text-decoration:underline;cursor:pointer;padding:0;">تسجيل الخروج</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="stat-row">
+    <div class="stat"><div class="num mono" id="statTotal">0</div><div class="lbl">إجمالي الملاحظات</div></div>
+    <div class="stat"><div class="num mono" id="statOpen">0</div><div class="lbl">مفتوحة</div></div>
+    <div class="stat"><div class="num mono" id="statUrgent">0</div><div class="lbl">عاجلة</div></div>
+    <div class="stat"><div class="num mono" id="statDone">0</div><div class="lbl">تم الحل</div></div>
+  </div>
+
+  <div class="card">
+    <h2>إدارة حسابات المشرفين</h2>
+    <div class="two-col">
+      <div class="field">
+        <label for="newEngName">اسم المشرف</label>
+        <input type="text" id="newEngName" placeholder="مثال: م. أحمد">
+      </div>
+      <div class="field">
+        <label for="newEngPhone">رقم هاتفه (واتساب)</label>
+        <input type="text" id="newEngPhone" placeholder="مثال: 201012345678">
+      </div>
+    </div>
+    <button class="btn" id="createEngBtn" type="button">إنشاء حساب برقم تعريفي</button>
+    <div id="engCreatedResult" class="hint" style="display:none;"></div>
+    <div id="engineersListWrap" style="margin-top:12px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>المتابعة والمراقبة</h2>
+    <div class="severity-row">
+      <div class="sev-opt active" data-range="today">اليوم</div>
+      <div class="sev-opt" data-range="week">آخر 7 أيام</div>
+      <div class="sev-opt" data-range="all">كل الفترات</div>
+    </div>
+    <div id="dashboardContent"></div>
+  </div>
+
+  <div class="card">
+    <h2>سجل التقارير والمستندات الصادرة</h2>
+    <div id="docLogWrap"></div>
+    <button class="btn dark" id="exportDocLogBtn" type="button">تصدير السجل الكامل Excel</button>
+  </div>
+
+  <div class="card">
+    <h2>كلمة سر التطبيق</h2>
+    <button class="btn outline" id="setPasswordBtn" type="button">تغيير كلمة السر المشتركة للفريق</button>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBpjdcJvmPM1ykbyvfjp3enPIZAqPFj8PA",
+  authDomain: "albostan-avenue.firebaseapp.com",
+  projectId: "albostan-avenue",
+  storageBucket: "albostan-avenue.firebasestorage.app",
+  messagingSenderId: "241033392452",
+  appId: "1:241033392452:web:8dcde97e0219817e606711"
+};
+let db = null;
+let auth = null;
+try{
+  firebase.initializeApp(firebaseConfig);
+  db = firebase.firestore();
+  auth = firebase.auth();
+}catch(e){ db = null; auth = null; }
+
+const DEFAULT_TEAM_PASSWORD = '2030';
+const DEPT_ABBR = {'معماري':'ARC','إنشائي':'STR','كهرباء':'ELEC.','ميكانيكا':'MEC'};
+const STATUS_LABELS = {open:'مفتوحة', urgent:'عاجلة', done:'تم الحل'};
+const WORK_STATUS_LABELS = {planned:'لم يبدأ', in_progress:'جاري التنفيذ', completed:'مكتمل'};
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s == null ? '' : String(s);
+  return d.innerHTML;
+}
+function normalizePhone(p){ return (p || '').replace(/[^0-9]/g, ''); }
+function entryStatusKey(e){
+  if(e.status === 'done') return 'done';
+  if(e.severity === 'urgent') return 'urgent';
+  return 'open';
+}
+
+let cachedMeta = null;
+async function loadMeta(forceRefresh){
+  if(!forceRefresh && cachedMeta) return cachedMeta;
+  let result = {};
+  if(db){
+    try{
+      const doc = await db.collection('meta').doc('config').get();
+      result = doc.exists ? doc.data() : {};
+    }catch(e){ result = {}; }
+  }
+  cachedMeta = result;
+  return result;
+}
+async function saveMeta(meta){
+  if(db){
+    await db.collection('meta').doc('config').set(meta, {merge:true});
+  }
+  cachedMeta = {...(cachedMeta || {}), ...meta};
+}
+
+let entries = [];
+let workEntries = [];
+function subscribeData(){
+  if(!db) return;
+  db.collection('snag_entries').onSnapshot(snap => {
+    entries = snap.docs.map(d => d.data());
+    renderDashboard();
+  });
+  db.collection('work_entries').onSnapshot(snap => {
+    workEntries = snap.docs.map(d => d.data());
+    renderDashboard();
+  });
+}
+
+async function loadAllEngineers(){
+  if(!db) return [];
+  try{
+    const snap = await db.collection('engineers').get();
+    return snap.docs.map(d => d.data());
+  }catch(e){ return []; }
+}
+async function generateUniqueEngineerId(){
+  for(let i=0;i<8;i++){
+    const candidate = String(Math.floor(1000 + Math.random()*9000));
+    try{
+      const doc = await db.collection('engineers').doc(candidate).get();
+      if(!doc.exists) return candidate;
+    }catch(e){ return candidate; }
+  }
+  return String(Date.now()).slice(-4);
+}
+async function renderEngineersList(){
+  const wrap = document.getElementById('engineersListWrap');
+  wrap.innerHTML = '<p class="hint">جارٍ التحميل...</p>';
+  const list = await loadAllEngineers();
+  if(list.length === 0){
+    wrap.innerHTML = '<p class="hint">لا يوجد مشرفون مسجلون بعد.</p>';
+    return;
+  }
+  wrap.innerHTML = `<table>
+    <tr><th>الرقم التعريفي</th><th>الاسم</th><th>الهاتف</th><th></th></tr>
+    ${list.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0)).map(eng => `
+      <tr>
+        <td class="mono" style="text-align:center;font-weight:600;">${escapeHtml(eng.id||'')}</td>
+        <td>${escapeHtml(eng.name||'')}</td>
+        <td>${escapeHtml(eng.phone||'')}</td>
+        <td style="text-align:center;"><button type="button" class="del-link" data-del-eng="${escapeHtml(eng.id||'')}">حذف</button></td>
+      </tr>`).join('')}
+  </table>`;
+}
+document.getElementById('engineersListWrap').addEventListener('click', async (ev) => {
+  const btn = ev.target.closest('[data-del-eng]');
+  if(!btn) return;
+  if(!confirm('هل تريد حذف حساب هذا المشرف؟ لن يتمكن من الدخول بعد الحذف.')) return;
+  try{ await db.collection('engineers').doc(btn.getAttribute('data-del-eng')).delete(); }catch(e){}
+  renderEngineersList();
+});
+document.getElementById('createEngBtn').addEventListener('click', async () => {
+  const name = document.getElementById('newEngName').value.trim();
+  const phone = normalizePhone(document.getElementById('newEngPhone').value);
+  const resultBox = document.getElementById('engCreatedResult');
+  if(!name || phone.length < 8){
+    resultBox.style.display = 'block';
+    resultBox.textContent = 'من فضلك أدخل اسم المشرف ورقم هاتف صحيح.';
+    return;
+  }
+  const id = await generateUniqueEngineerId();
+  try{
+    await db.collection('engineers').doc(id).set({id, name, phone, createdAt: Date.now()});
+  }catch(e){
+    resultBox.style.display = 'block';
+    resultBox.textContent = 'تعذر إنشاء الحساب. تأكد من صلاحيات Firestore لمجموعة engineers.';
+    return;
+  }
+  resultBox.style.display = 'block';
+  resultBox.innerHTML = `تم إنشاء الحساب بنجاح — الرقم التعريفي: <strong class="mono" style="font-size:15px;">${id}</strong><br>أرسل هذا الرقم لـ${escapeHtml(name)} ليستخدمه عند فتح تطبيق تسجيل الملاحظات.`;
+  document.getElementById('newEngName').value = '';
+  document.getElementById('newEngPhone').value = '';
+  renderEngineersList();
+});
+
+let currentRange = 'today';
+document.querySelectorAll('.sev-opt[data-range]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    currentRange = btn.getAttribute('data-range');
+    document.querySelectorAll('.sev-opt[data-range]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderDashboard();
+  });
+});
+
+function inRange(list, range){
+  if(range === 'all') return list;
+  const cutoff = range === 'today' ? new Date().setHours(0,0,0,0) : Date.now() - 7*24*60*60*1000;
+  return list.filter(e => (e.ts||0) >= cutoff);
+}
+
+async function renderDashboard(){
+  document.getElementById('statTotal').textContent = entries.length;
+  document.getElementById('statOpen').textContent = entries.filter(e=>entryStatusKey(e)==='open').length;
+  document.getElementById('statUrgent').textContent = entries.filter(e=>entryStatusKey(e)==='urgent').length;
+  document.getElementById('statDone').textContent = entries.filter(e=>entryStatusKey(e)==='done').length;
+
+  const rangeEntries = inRange(entries, currentRange);
+  const engineersList = await loadAllEngineers();
+  const rangeLabel = currentRange === 'today' ? 'اليوم' : currentRange === 'week' ? 'آخر 7 أيام' : 'كل الفترات';
+
+  const byEngineer = {};
+  engineersList.forEach(eng => { byEngineer[eng.phone] = {name: eng.name, phone: eng.phone, count: 0}; });
+  rangeEntries.forEach(e => {
+    const key = e.byPhone || ('name:' + (e.by || 'غير معروف'));
+    if(!byEngineer[key]) byEngineer[key] = {name: e.by || 'غير معروف', phone: e.byPhone || '', count: 0};
+    byEngineer[key].count++;
+  });
+
+  const deptCounts = {};
+  rangeEntries.forEach(e => { if(e.dept) deptCounts[e.dept] = (deptCounts[e.dept]||0) + 1; });
+
+  const buildingAgg = {};
+  workEntries.forEach(w => {
+    const b = w.building || 'غير محدد';
+    buildingAgg[b] = buildingAgg[b] || {sum:0, count:0};
+    buildingAgg[b].sum += (w.percentComplete || 0);
+    buildingAgg[b].count++;
+  });
+
+  document.getElementById('dashboardContent').innerHTML = `
+    <h3>نشاط المشرفين (${rangeLabel})</h3>
+    <table>
+      <tr><th>الاسم</th><th>الهاتف</th><th>عدد الملاحظات</th></tr>
+      ${Object.values(byEngineer).sort((a,b)=>b.count-a.count).map(eng =>
+        `<tr><td>${escapeHtml(eng.name)}</td><td>${escapeHtml(eng.phone||'-')}</td><td>${eng.count}</td></tr>`
+      ).join('') || '<tr><td colspan="3">لا يوجد نشاط مسجل.</td></tr>'}
+    </table>
+    <h3>التوزيع حسب القسم</h3>
+    <table>
+      <tr><th>القسم</th><th>العدد</th></tr>
+      ${Object.entries(deptCounts).sort((a,b)=>b[1]-a[1]).map(([d,c]) => `<tr><td>${escapeHtml(d)}</td><td>${c}</td></tr>`).join('') || '<tr><td colspan="2">لا توجد بيانات.</td></tr>'}
+    </table>
+    <h3>نسب الإنجاز حسب المبنى (إجمالي الأعمال الجارية)</h3>
+    <table>
+      <tr><th>المبنى</th><th>نسبة الإنجاز</th><th>عدد البنود</th></tr>
+      ${Object.keys(buildingAgg).sort().map(b => {
+        const agg = buildingAgg[b];
+        const avg = agg.count ? Math.round(agg.sum/agg.count) : 0;
+        return `<tr><td>${escapeHtml(b)}</td><td>${avg}%</td><td>${agg.count}</td></tr>`;
+      }).join('') || '<tr><td colspan="3">لا توجد أعمال جارية مسجلة.</td></tr>'}
+    </table>
+  `;
+}
+
+async function loadDocumentLog(){
+  if(!db) return [];
+  try{
+    const snap = await db.collection('document_log').orderBy('ts','desc').limit(500).get();
+    return snap.docs.map(d => d.data());
+  }catch(e){ return []; }
+}
+async function renderDocumentLog(){
+  const wrap = document.getElementById('docLogWrap');
+  wrap.innerHTML = '<p class="hint">جارٍ التحميل...</p>';
+  const log = await loadDocumentLog();
+  if(log.length === 0){
+    wrap.innerHTML = '<p class="hint">لا يوجد مستندات مسجلة بعد.</p>';
+    return;
+  }
+  const typeCounts = {};
+  log.forEach(l => { typeCounts[l.type] = (typeCounts[l.type]||0)+1; });
+  wrap.innerHTML = `
+    <table>
+      <tr><th>النوع</th><th>العدد</th></tr>
+      ${Object.entries(typeCounts).sort((a,b)=>b[1]-a[1]).map(([t,c])=>`<tr><td>${escapeHtml(t)}</td><td style="text-align:center;">${c}</td></tr>`).join('')}
+    </table>
+    <table>
+      <tr><th>الرقم المرجعي</th><th>النوع</th><th>بواسطة</th><th>التاريخ</th></tr>
+      ${log.slice(0,50).map(l => `<tr><td class="mono">${escapeHtml(l.refNo)}</td><td>${escapeHtml(l.type)}</td><td>${escapeHtml(l.by)}</td><td>${escapeHtml(l.dateStr)}</td></tr>`).join('')}
+    </table>
+    ${log.length>50 ? `<p class="hint">عرض آخر 50 من ${log.length}. استخدم زر التصدير للسجل كاملاً.</p>` : ''}
+  `;
+}
+
+let exceljsLoadPromise = null;
+function ensureExcelJSLoaded(){
+  if(window.ExcelJS) return Promise.resolve();
+  if(exceljsLoadPromise) return exceljsLoadPromise;
+  exceljsLoadPromise = new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+    s.onload = resolve; s.onerror = reject;
+    document.head.appendChild(s);
+  });
+  return exceljsLoadPromise;
+}
+document.getElementById('exportDocLogBtn').addEventListener('click', async () => {
+  const btn = document.getElementById('exportDocLogBtn');
+  const original = btn.textContent;
+  btn.disabled = true; btn.textContent = 'جارٍ التصدير...';
+  try{
+    await ensureExcelJSLoaded();
+    const log = await loadDocumentLog();
+    if(log.length === 0){ alert('لا يوجد مستندات مسجلة بعد.'); btn.disabled=false; btn.textContent=original; return; }
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('سجل التقارير والمستندات', {views:[{rightToLeft:true}]});
+    sheet.columns = [
+      {header:'م', key:'no', width:6}, {header:'الرقم المرجعي', key:'refNo', width:22},
+      {header:'نوع المستند', key:'type', width:22}, {header:'التفاصيل', key:'details', width:36},
+      {header:'بواسطة', key:'by', width:16}, {header:'التاريخ والوقت', key:'date', width:18}
+    ];
+    sheet.getRow(1).font = {bold:true, color:{argb:'FFFFFFFF'}};
+    sheet.getRow(1).fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FF221F1D'}};
+    sheet.views = [{state:'frozen', ySplit:1, rightToLeft:true}];
+    log.slice().reverse().forEach((l, idx) => {
+      sheet.addRow({no: idx+1, refNo: l.refNo, type: l.type, details: l.details, by: l.by, date: l.dateStr});
+    });
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'سجل_التقارير_والمستندات.xlsx';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 4000);
+  }catch(e){ alert('تعذر تصدير السجل الآن.'); }
+  btn.disabled = false; btn.textContent = original;
+});
+
+document.getElementById('setPasswordBtn').addEventListener('click', async () => {
+  const meta = await loadMeta();
+  const current = meta.teamPassword || DEFAULT_TEAM_PASSWORD;
+  const enteredCurrent = prompt('لتأكيد هويتك، اكتب كلمة السر الحالية:');
+  if(enteredCurrent === null) return;
+  if(enteredCurrent !== current){ alert('كلمة السر الحالية غير صحيحة.'); return; }
+  const newPass = prompt('اكتب كلمة السر الجديدة لكل الفريق:');
+  if(newPass === null || !newPass.trim()) return;
+  await saveMeta({teamPassword: newPass.trim()});
+  alert('تم تغيير كلمة السر. أبلغ الفريق بالكلمة الجديدة.');
+});
+
+function unlockDashboard(){
+  document.body.classList.remove('locked');
+  document.getElementById('gateOverlay').style.display = 'none';
+  subscribeData();
+  renderDashboard();
+  renderEngineersList();
+  renderDocumentLog();
+}
+
+function authErrorMessage(err){
+  const map = {
+    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة.',
+    'auth/user-not-found': 'لا يوجد حساب بهذا البريد. جرّب "إنشاء حساب مدير جديد".',
+    'auth/wrong-password': 'كلمة المرور غير صحيحة.',
+    'auth/invalid-credential': 'البريد أو كلمة المرور غير صحيحة.',
+    'auth/email-already-in-use': 'هذا البريد مسجّل بالفعل. استخدم "تسجيل الدخول" بدلًا من إنشاء حساب.',
+    'auth/weak-password': 'كلمة المرور ضعيفة، استخدم 6 أحرف على الأقل.',
+    'auth/operation-not-allowed': 'تسجيل الدخول بالإيميل وكلمة المرور غير مُفعّل في مشروع Firebase. راجع الشرح في دليل التسليم.'
+  };
+  return map[err.code] || ('تعذر تسجيل الدخول: ' + err.message);
+}
+
+async function attemptGateLogin(){
+  const emailInput = document.getElementById('gateEmailInput');
+  const passInput = document.getElementById('gatePasswordInput');
+  const errEl = document.getElementById('gateErr');
+  if(!auth){
+    errEl.textContent = 'تعذر الاتصال بخدمة تسجيل الدخول. تأكد من اتصالك بالإنترنت.';
+    return;
+  }
+  try{
+    await auth.signInWithEmailAndPassword(emailInput.value.trim(), passInput.value);
+    errEl.textContent = '';
+  }catch(err){
+    errEl.textContent = authErrorMessage(err);
+  }
+}
+
+async function isAdminAlreadyBootstrapped(){
+  if(!db) return false;
+  try{
+    const doc = await db.collection('admin_meta').doc('bootstrap').get();
+    return doc.exists && doc.data().adminCreated === true;
+  }catch(e){ return false; }
+}
+
+async function refreshSignupAvailability(){
+  const bootstrapped = await isAdminAlreadyBootstrapped();
+  const signupBtn = document.getElementById('gateSignupBtn');
+  const hint = document.getElementById('gateModeHint');
+  if(bootstrapped){
+    signupBtn.style.display = 'none';
+    hint.textContent = 'سجّل الدخول بالإيميل وكلمة المرور الخاصين بمدير الفريق. لإضافة مدير آخر، تواصل مع المدير الحالي.';
+  } else {
+    signupBtn.style.display = 'block';
+    hint.textContent = 'أول استخدام؟ اضغط "إنشاء حساب مدير جديد" بالأسفل لإنشاء أول حساب لمدير الفريق.';
+  }
+}
+
+async function attemptGateSignup(){
+  const emailInput = document.getElementById('gateEmailInput');
+  const passInput = document.getElementById('gatePasswordInput');
+  const errEl = document.getElementById('gateErr');
+  if(!auth){
+    errEl.textContent = 'تعذر الاتصال بخدمة تسجيل الدخول. تأكد من اتصالك بالإنترنت.';
+    return;
+  }
+  if(await isAdminAlreadyBootstrapped()){
+    errEl.textContent = 'يوجد حساب مدير مُسجَّل بالفعل لهذا المشروع. تواصل مع مدير الفريق الحالي إذا احتجت صلاحية إضافية.';
+    refreshSignupAvailability();
+    return;
+  }
+  if(!emailInput.value.trim() || passInput.value.length < 6){
+    errEl.textContent = 'أدخل بريدًا صحيحًا وكلمة مرور من 6 أحرف على الأقل.';
+    return;
+  }
+  if(!confirm('سيتم إنشاء حساب مدير جديد بهذا البريد، وسيكون هذا الحساب هو المدير الوحيد المسموح له بالدخول لاحقًا. تأكد من صحة البريد قبل المتابعة. هل تريد الاستمرار؟')) return;
+  try{
+    await auth.createUserWithEmailAndPassword(emailInput.value.trim(), passInput.value);
+    try{ await db.collection('admin_meta').doc('bootstrap').set({adminCreated: true, createdAt: Date.now()}); }catch(e){}
+    errEl.textContent = '';
+  }catch(err){
+    errEl.textContent = authErrorMessage(err);
+  }
+}
+
+document.getElementById('gateSubmitBtn').addEventListener('click', attemptGateLogin);
+document.getElementById('gateSignupBtn').addEventListener('click', attemptGateSignup);
+document.getElementById('gatePasswordInput').addEventListener('keydown', (ev) => { if(ev.key === 'Enter') attemptGateLogin(); });
+document.getElementById('gateEmailInput').addEventListener('keydown', (ev) => { if(ev.key === 'Enter') document.getElementById('gatePasswordInput').focus(); });
+document.getElementById('gateEmailInput').focus();
+refreshSignupAvailability();
+
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  if(auth) await auth.signOut();
+  location.reload();
+});
+
+if(auth){
+  auth.onAuthStateChanged(user => {
+    if(user){
+      unlockDashboard();
+    } else {
+      document.body.classList.add('locked');
+      document.getElementById('gateOverlay').style.display = 'flex';
+      refreshSignupAvailability();
+    }
+  });
+}
+if(db) loadMeta();
+</script>
+</body>
+</html>
