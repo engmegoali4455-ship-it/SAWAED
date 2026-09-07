@@ -346,6 +346,10 @@ body.locked > *:not(.gate-overlay){display:none !important;}
   </div>
 
   <div id="notesView">
+    <div class="severity-row" style="margin-top:14px;">
+      <div class="loc-opt sev-opt active-normal" id="myRecordsAll" data-scope="all">كل السجلات</div>
+      <div class="loc-opt sev-opt" id="myRecordsMine" data-scope="mine">سجلاتي فقط</div>
+    </div>
     <div class="filters">
       <select id="fBuilding"><option value="">كل المباني</option></select>
       <select id="fDept"><option value="">كل الأقسام</option></select>
@@ -860,12 +864,17 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
+let notesScope = 'all';
 function applyFilters(list){
   const b = document.getElementById('fBuilding').value;
   const d = document.getElementById('fDept').value;
   const s = document.getElementById('fStatus').value;
   const q = document.getElementById('fSearch').value.trim().toLowerCase();
   return list.filter(e => {
+    if(notesScope === 'mine'){
+      const mine = (sessionEngineerId && e.byId === sessionEngineerId) || (sessionPhone && e.byPhone === sessionPhone);
+      if(!mine) return false;
+    }
     if(b && e.building !== b) return false;
     if(d && e.dept !== d) return false;
     if(s === 'open' && !(e.status !== 'done' && e.severity !== 'urgent')) return false;
@@ -982,6 +991,23 @@ document.getElementById('listArea').addEventListener('click', async (ev) => {
 
 ['fBuilding','fDept','fStatus'].forEach(id => document.getElementById(id).addEventListener('change', render));
 document.getElementById('fSearch').addEventListener('input', render);
+
+document.getElementById('myRecordsAll').addEventListener('click', () => {
+  notesScope = 'all';
+  document.getElementById('myRecordsAll').classList.add('active-normal');
+  document.getElementById('myRecordsMine').classList.remove('active-normal');
+  render();
+});
+document.getElementById('myRecordsMine').addEventListener('click', () => {
+  if(!sessionEngineerId && !sessionPhone){
+    alert('سجّل الدخول برقمك التعريفي أولاً حتى تتمكن من فلترة سجلاتك الخاصة.');
+    return;
+  }
+  notesScope = 'mine';
+  document.getElementById('myRecordsMine').classList.add('active-normal');
+  document.getElementById('myRecordsAll').classList.remove('active-normal');
+  render();
+});
 
 document.getElementById('resetBtn').addEventListener('click', async () => {
   if(confirm('سيتم حذف كل الملاحظات المخزنة لجميع أعضاء الفريق. هل أنت متأكد؟')){

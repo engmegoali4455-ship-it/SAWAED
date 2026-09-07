@@ -65,11 +65,9 @@ body.locked > *:not(.gate-overlay){display:none !important;}
 <div class="gate-overlay" id="gateOverlay">
   <div class="gate-card">
     <h2>لوحة تحكم مدير الفريق</h2>
-    <p id="gateModeHint">سجّل الدخول بالإيميل وكلمة المرور الخاصين بك.</p>
-    <input type="email" id="gateEmailInput" placeholder="البريد الإلكتروني" autocomplete="username">
-    <input type="password" id="gatePasswordInput" placeholder="كلمة المرور" autocomplete="current-password">
-    <button type="button" id="gateSubmitBtn">تسجيل الدخول</button>
-    <button type="button" id="gateSignupBtn" style="background:none;color:var(--brand-dark);text-decoration:underline;margin-top:10px;font-size:12px;padding:4px;">لا تملك حسابًا؟ إنشاء حساب مدير جديد</button>
+    <p>هذه الصفحة خاصة بمدير الفريق فقط. أدخل كلمة السر للدخول مباشرة.</p>
+    <input type="password" id="gatePasswordInput" placeholder="كلمة سر مدير الفريق" autocomplete="current-password">
+    <button type="button" id="gateSubmitBtn">دخول</button>
     <div class="gate-err" id="gateErr"></div>
   </div>
 </div>
@@ -129,11 +127,15 @@ body.locked > *:not(.gate-overlay){display:none !important;}
     <h2>كلمة سر التطبيق</h2>
     <button class="btn outline" id="setPasswordBtn" type="button">تغيير كلمة السر المشتركة للفريق</button>
   </div>
+
+  <div class="card">
+    <h2>كلمة سر لوحة التحكم</h2>
+    <button class="btn outline" id="setAdminPasswordBtn" type="button">تغيير كلمة سر دخول هذه اللوحة</button>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyBpjdcJvmPM1ykbyvfjp3enPIZAqPFj8PA",
@@ -144,14 +146,13 @@ const firebaseConfig = {
   appId: "1:241033392452:web:8dcde97e0219817e606711"
 };
 let db = null;
-let auth = null;
 try{
   firebase.initializeApp(firebaseConfig);
   db = firebase.firestore();
-  auth = firebase.auth();
-}catch(e){ db = null; auth = null; }
+}catch(e){ db = null; }
 
 const DEFAULT_TEAM_PASSWORD = '2030';
+const DEFAULT_ADMIN_PASSWORD = 'sawaed-admin-2030';
 const DEPT_ABBR = {'معماري':'ARC','إنشائي':'STR','كهرباء':'ELEC.','ميكانيكا':'MEC'};
 const STATUS_LABELS = {open:'مفتوحة', urgent:'عاجلة', done:'تم الحل'};
 const WORK_STATUS_LABELS = {planned:'لم يبدأ', in_progress:'جاري التنفيذ', completed:'مكتمل'};
@@ -426,6 +427,18 @@ document.getElementById('setPasswordBtn').addEventListener('click', async () => 
   alert('تم تغيير كلمة السر. أبلغ الفريق بالكلمة الجديدة.');
 });
 
+document.getElementById('setAdminPasswordBtn').addEventListener('click', async () => {
+  const meta = await loadMeta();
+  const current = meta.adminPassword || DEFAULT_ADMIN_PASSWORD;
+  const enteredCurrent = prompt('لتأكيد هويتك، اكتب كلمة سر اللوحة الحالية:');
+  if(enteredCurrent === null) return;
+  if(enteredCurrent !== current){ alert('كلمة السر الحالية غير صحيحة.'); return; }
+  const newPass = prompt('اكتب كلمة سر جديدة لدخول هذه اللوحة (احفظها في مكان آمن):');
+  if(newPass === null || !newPass.trim()) return;
+  await saveMeta({adminPassword: newPass.trim()});
+  alert('تم تغيير كلمة سر اللوحة.');
+});
+
 function unlockDashboard(){
   document.body.classList.remove('locked');
   document.getElementById('gateOverlay').style.display = 'none';
@@ -435,106 +448,40 @@ function unlockDashboard(){
   renderDocumentLog();
 }
 
-function authErrorMessage(err){
-  const map = {
-    'auth/invalid-email': 'صيغة البريد الإلكتروني غير صحيحة.',
-    'auth/user-not-found': 'لا يوجد حساب بهذا البريد. جرّب "إنشاء حساب مدير جديد".',
-    'auth/wrong-password': 'كلمة المرور غير صحيحة.',
-    'auth/invalid-credential': 'البريد أو كلمة المرور غير صحيحة.',
-    'auth/email-already-in-use': 'هذا البريد مسجّل بالفعل. استخدم "تسجيل الدخول" بدلًا من إنشاء حساب.',
-    'auth/weak-password': 'كلمة المرور ضعيفة، استخدم 6 أحرف على الأقل.',
-    'auth/operation-not-allowed': 'تسجيل الدخول بالإيميل وكلمة المرور غير مُفعّل في مشروع Firebase. راجع الشرح في دليل التسليم.'
-  };
-  return map[err.code] || ('تعذر تسجيل الدخول: ' + err.message);
-}
-
 async function attemptGateLogin(){
-  const emailInput = document.getElementById('gateEmailInput');
-  const passInput = document.getElementById('gatePasswordInput');
+  const input = document.getElementById('gatePasswordInput');
   const errEl = document.getElementById('gateErr');
-  if(!auth){
-    errEl.textContent = 'تعذر الاتصال بخدمة تسجيل الدخول. تأكد من اتصالك بالإنترنت.';
-    return;
-  }
+  const btn = document.getElementById('gateSubmitBtn');
+  btn.disabled = true;
+  const original = btn.textContent;
+  btn.textContent = 'جارٍ التحقق...';
+  let correctPassword = DEFAULT_ADMIN_PASSWORD;
   try{
-    await auth.signInWithEmailAndPassword(emailInput.value.trim(), passInput.value);
+    const meta = await loadMeta();
+    if(meta.adminPassword) correctPassword = meta.adminPassword;
+  }catch(e){}
+  btn.disabled = false;
+  btn.textContent = original;
+  if(input.value === correctPassword){
     errEl.textContent = '';
-  }catch(err){
-    errEl.textContent = authErrorMessage(err);
-  }
-}
-
-async function isAdminAlreadyBootstrapped(){
-  if(!db) return false;
-  try{
-    const doc = await db.collection('admin_meta').doc('bootstrap').get();
-    return doc.exists && doc.data().adminCreated === true;
-  }catch(e){ return false; }
-}
-
-async function refreshSignupAvailability(){
-  const bootstrapped = await isAdminAlreadyBootstrapped();
-  const signupBtn = document.getElementById('gateSignupBtn');
-  const hint = document.getElementById('gateModeHint');
-  if(bootstrapped){
-    signupBtn.style.display = 'none';
-    hint.textContent = 'سجّل الدخول بالإيميل وكلمة المرور الخاصين بمدير الفريق. لإضافة مدير آخر، تواصل مع المدير الحالي.';
+    unlockDashboard();
   } else {
-    signupBtn.style.display = 'block';
-    hint.textContent = 'أول استخدام؟ اضغط "إنشاء حساب مدير جديد" بالأسفل لإنشاء أول حساب لمدير الفريق.';
-  }
-}
-
-async function attemptGateSignup(){
-  const emailInput = document.getElementById('gateEmailInput');
-  const passInput = document.getElementById('gatePasswordInput');
-  const errEl = document.getElementById('gateErr');
-  if(!auth){
-    errEl.textContent = 'تعذر الاتصال بخدمة تسجيل الدخول. تأكد من اتصالك بالإنترنت.';
-    return;
-  }
-  if(await isAdminAlreadyBootstrapped()){
-    errEl.textContent = 'يوجد حساب مدير مُسجَّل بالفعل لهذا المشروع. تواصل مع مدير الفريق الحالي إذا احتجت صلاحية إضافية.';
-    refreshSignupAvailability();
-    return;
-  }
-  if(!emailInput.value.trim() || passInput.value.length < 6){
-    errEl.textContent = 'أدخل بريدًا صحيحًا وكلمة مرور من 6 أحرف على الأقل.';
-    return;
-  }
-  if(!confirm('سيتم إنشاء حساب مدير جديد بهذا البريد، وسيكون هذا الحساب هو المدير الوحيد المسموح له بالدخول لاحقًا. تأكد من صحة البريد قبل المتابعة. هل تريد الاستمرار؟')) return;
-  try{
-    await auth.createUserWithEmailAndPassword(emailInput.value.trim(), passInput.value);
-    try{ await db.collection('admin_meta').doc('bootstrap').set({adminCreated: true, createdAt: Date.now()}); }catch(e){}
-    errEl.textContent = '';
-  }catch(err){
-    errEl.textContent = authErrorMessage(err);
+    errEl.textContent = 'كلمة السر غير صحيحة.';
+    input.value = '';
+    input.focus();
   }
 }
 
 document.getElementById('gateSubmitBtn').addEventListener('click', attemptGateLogin);
-document.getElementById('gateSignupBtn').addEventListener('click', attemptGateSignup);
 document.getElementById('gatePasswordInput').addEventListener('keydown', (ev) => { if(ev.key === 'Enter') attemptGateLogin(); });
-document.getElementById('gateEmailInput').addEventListener('keydown', (ev) => { if(ev.key === 'Enter') document.getElementById('gatePasswordInput').focus(); });
-document.getElementById('gateEmailInput').focus();
-refreshSignupAvailability();
+document.getElementById('gatePasswordInput').focus();
 
-document.getElementById('logoutBtn').addEventListener('click', async () => {
-  if(auth) await auth.signOut();
-  location.reload();
+document.getElementById('logoutBtn').addEventListener('click', () => {
+  document.body.classList.add('locked');
+  document.getElementById('gateOverlay').style.display = 'flex';
+  document.getElementById('gatePasswordInput').value = '';
 });
 
-if(auth){
-  auth.onAuthStateChanged(user => {
-    if(user){
-      unlockDashboard();
-    } else {
-      document.body.classList.add('locked');
-      document.getElementById('gateOverlay').style.display = 'flex';
-      refreshSignupAvailability();
-    }
-  });
-}
 if(db) loadMeta();
 </script>
 </body>
