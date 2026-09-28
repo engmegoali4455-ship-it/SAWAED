@@ -1,0 +1,19 @@
+# --- Video generation ---
+moviepy==2.2.1
+numpy>=1.26,<3
+Pillow>=10.4,<12
+imageio-ffmpeg>=0.5.1
+openai-whisper==20250625
+arabic-reshaper==3.0.0
+python-bidi==0.6.6
+
+# --- Uploading ---
+requests>=2.32,<3
+google-api-python-client>=2.150,<3
+google-auth>=2.35,<3
+google-auth-oauthlib>=1.2,<2
+google-auth-httplib2>=0.2,<1
+
+# --- Scheduling / config ---
+schedule==1.2.2
+python-dotenv>=1.0,<2

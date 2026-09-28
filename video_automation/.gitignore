@@ -1,0 +1,15 @@
+.env
+client_secret*.json
+state/
+logs/
+output/
+archive/
+input/audio/*
+input/backgrounds/*
+!input/audio/.gitkeep
+!input/backgrounds/.gitkeep
+fonts/*.ttf
+fonts/*.otf
+__pycache__/
+*.pyc
+.venv/
