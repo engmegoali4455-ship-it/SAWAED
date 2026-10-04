@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>معرض الأعمال</title>
+<meta name="description" content="معرض أعمال: أدوات ويب للمتابعة الميدانية والإشراف الهندسي وتقارير الاستشاري.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --paper:#F1EEE9; --card:#FFFFFF; --ink:#231F1C; --ink-soft:#726A62; --line:#E0DAD2;
+  --brand:#E85E30; --brand-dark:#C94A22; --ink-deep:#221F1D; --chip:#F6E8C9; --chip-ink:#8A6312;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#171513; --card:#211E1B; --ink:#F1EEE9; --ink-soft:#A99F95; --line:#36302B;
+    --brand:#F0703F; --brand-dark:#E85E30; --ink-deep:#0F0E0D; --chip:#3A2F1A; --chip-ink:#E8C374;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#171513; --card:#211E1B; --ink:#F1EEE9; --ink-soft:#A99F95; --line:#36302B;
+  --brand:#F0703F; --brand-dark:#E85E30; --ink-deep:#0F0E0D; --chip:#3A2F1A; --chip-ink:#E8C374;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Arabic',sans-serif;line-height:1.7;}
+a{color:inherit;}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px;}
+.mono{font-family:'IBM Plex Mono','IBM Plex Sans Arabic',monospace;}
+
+/* Header */
+header.hero{background:var(--ink-deep);color:#F1EEE9;border-bottom:3px solid var(--brand);}
+nav.top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 0;}
+nav.top .brand{font-weight:700;font-size:15px;}
+nav.top ul{list-style:none;display:flex;gap:18px;margin:0;padding:0;font-size:14px;}
+nav.top ul a{text-decoration:none;color:#C9BEB5;}
+nav.top ul a:hover{color:#fff;}
+.hero-body{padding:48px 0 56px;display:grid;grid-template-columns:1.4fr 1fr;gap:32px;align-items:center;}
+.hero-body .kicker{color:var(--brand);font-weight:600;font-size:14px;margin:0 0 6px;}
+.hero-body h1{font-size:clamp(28px,5vw,42px);line-height:1.3;margin:0 0 12px;}
+.hero-body p.lead{color:#C9BEB5;font-size:16px;margin:0 0 24px;max-width:56ch;}
+.cta{display:flex;gap:10px;flex-wrap:wrap;}
+.btn{display:inline-block;text-decoration:none;font-weight:600;font-size:15px;padding:11px 20px;border-radius:6px;border:1px solid transparent;}
+.btn.primary{background:var(--brand);color:#fff;}
+.btn.primary:hover{background:var(--brand-dark);}
+.btn.ghost{border-color:#4A433D;color:#F1EEE9;}
+.btn.ghost:hover{border-color:#F1EEE9;}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat{background:rgba(255,255,255,0.07);border-radius:6px;padding:16px;text-align:center;}
+.stat .num{direction:ltr;unicode-bidi:isolate;font-family:'IBM Plex Mono';font-size:26px;font-weight:600;color:#F0B45C;}
+.stat .lbl{font-size:13px;color:#B9C6CC;}
+
+/* Sections */
+section{padding:56px 0;}
+section h2{font-size:24px;margin:0 0 6px;}
+section .sub{color:var(--ink-soft);margin:0 0 28px;}
+
+.services{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;}
+.service{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:20px;}
+.service .ico{width:40px;height:40px;border-radius:8px;background:var(--chip);color:var(--chip-ink);display:flex;align-items:center;justify-content:center;margin-bottom:12px;}
+.service h3{font-size:16px;margin:0 0 6px;}
+.service p{font-size:14px;color:var(--ink-soft);margin:0;}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.filters button{font-family:inherit;font-size:14px;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
+.filters button.active{background:var(--brand);border-color:var(--brand);color:#fff;}
+
+.projects{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;}
+.project{background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
+.project .shot{aspect-ratio:4/3;background:var(--ink-deep);overflow:hidden;border-bottom:1px solid var(--line);}
+.project .shot img{width:100%;height:100%;object-fit:cover;object-position:top;display:block;}
+.project .shot.placeholder{display:flex;align-items:center;justify-content:center;color:#7d746b;font-size:14px;}
+.project .body{padding:18px;display:flex;flex-direction:column;gap:10px;flex:1;}
+.project h3{font-size:17px;margin:0;}
+.project p{font-size:14px;color:var(--ink-soft);margin:0;}
+.project ul{margin:0;padding-inline-start:18px;font-size:13.5px;color:var(--ink-soft);}
+.tags{display:flex;gap:6px;flex-wrap:wrap;}
+.tag{font-size:12px;background:var(--chip);color:var(--chip-ink);padding:2px 10px;border-radius:999px;}
+.project .links{margin-top:auto;display:flex;gap:14px;font-size:14px;font-weight:600;}
+.project .links a{color:var(--brand);text-decoration:none;}
+.project .links a:hover{text-decoration:underline;}
+
+.skills{display:flex;flex-wrap:wrap;gap:8px;}
+.skills span{background:var(--card);border:1px solid var(--line);padding:6px 14px;border-radius:6px;font-size:14px;}
+
+.contact{background:var(--ink-deep);color:#F1EEE9;border-radius:12px;padding:32px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;}
+.contact h2{margin:0 0 4px;}
+.contact p{margin:0;color:#C9BEB5;}
+
+footer{text-align:center;color:var(--ink-soft);font-size:13px;padding:28px 0 40px;}
+
+/* Lightbox */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:16px;z-index:50;cursor:zoom-out;}
+.lightbox.open{display:flex;}
+.lightbox img{max-width:100%;max-height:100%;border-radius:8px;}
+.project .shot img{cursor:zoom-in;}
+
+@media (max-width:720px){
+  nav.top ul{display:none;}
+  .hero-body{grid-template-columns:1fr;padding:32px 0 40px;}
+  .projects{grid-template-columns:1fr;}
+  .contact{padding:24px;}
+}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <nav class="top">
+      <div class="brand" data-field="name"></div>
+      <ul>
+        <li><a href="#services">الخدمات</a></li>
+        <li><a href="#work">الأعمال</a></li>
+        <li><a href="#skills">المهارات</a></li>
+        <li><a href="#contact">تواصل</a></li>
+      </ul>
+    </nav>
+    <div class="hero-body">
+      <div>
+        <p class="kicker" data-field="title"></p>
+        <h1 data-field="headline"></h1>
+        <p class="lead" data-field="bio"></p>
+        <div class="cta">
+          <a class="btn primary" href="#work">شاهد الأعمال</a>
+          <a class="btn ghost" href="#contact">اطلب خدمة</a>
+        </div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="services">
+    <div class="wrap">
+      <h2>الخدمات</h2>
+      <p class="sub">ماذا أقدّم لعملائي</p>
+      <div class="services" id="servicesList"></div>
+    </div>
+  </section>
+
+  <section id="work">
+    <div class="wrap">
+      <h2>معرض الأعمال</h2>
+      <p class="sub">مشاريع منفّذة فعليًا ومستخدمة في الموقع</p>
+      <div class="filters" id="filters"></div>
+      <div class="projects" id="projectsList"></div>
+    </div>
+  </section>
+
+  <section id="skills">
+    <div class="wrap">
+      <h2>المهارات والأدوات</h2>
+      <p class="sub">التقنيات التي أعمل بها</p>
+      <div class="skills" id="skillsList"></div>
+    </div>
+  </section>
+
+  <section id="contact">
+    <div class="wrap">
+      <div class="contact">
+        <div>
+          <h2>عندك مشروع؟</h2>
+          <p>تواصل معي وسأرد عليك في أقرب وقت.</p>
+        </div>
+        <div class="cta" id="contactLinks"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">© <span id="year"></span> <span data-field="name"></span> — جميع الحقوق محفوظة</div>
+</footer>
+
+<div class="lightbox" id="lightbox"><img alt=""></div>
+
+<script>
+/* =========================================================
+   عدّل بياناتك هنا فقط — كل محتوى الصفحة يُبنى من هذا الجزء
+   ========================================================= */
+const PROFILE = {
+  name: 'م. اسمك هنا',
+  title: 'مهندس إشراف ومطوّر أدوات ميدانية',
+  headline: 'أحوّل أعمال الموقع الورقية إلى تطبيقات ويب سهلة وتقارير احترافية',
+  bio: 'أصمّم وأبني أدوات ويب عربية لفرق الإشراف والمتابعة الميدانية: تسجيل الملاحظات بالصور، متابعة الأعمال الجارية، وإصدار تقارير الاستشاري وملفات Excel بضغطة زر — تعمل من الجوال بدون تثبيت.',
+  stats: [
+    {num: '2+', lbl: 'تطبيق ميداني منفّذ'},
+    {num: '100%', lbl: 'واجهة عربية RTL'},
+    {num: 'PDF / Excel', lbl: 'تقارير تلقائية'},
+    {num: 'جوال', lbl: 'يعمل على أي جهاز'},
+  ],
+  // ضع روابطك الحقيقية (اترك الرابط فارغًا '' لإخفائه)
+  contact: {
+    mostaql: 'https://mostaql.com/u/',
+    whatsapp: '',            // مثال: 'https://wa.me/9665XXXXXXXX'
+    email: '',               // مثال: 'name@example.com'
+  },
+};
+
+const SERVICES = [
+  {icon: 'app',    title: 'تطبيقات ويب للمواقع', text: 'تطبيقات تعمل من المتصفح لتسجيل الملاحظات والمتابعة اليومية لفريق الموقع.'},
+  {icon: 'report', title: 'تقارير الاستشاري', text: 'توليد تقارير منسّقة بالشعارات والتوقيعات والصور، جاهزة للطباعة والإرسال.'},
+  {icon: 'sheet',  title: 'أتمتة Excel', text: 'تصدير البيانات تلقائيًا إلى ملفات Excel مرتّبة حسب المبنى والقسم والحالة.'},
+  {icon: 'dash',   title: 'لوحات تحكم', text: 'لوحات متابعة للمدير توضح المفتوح والعاجل والمنجز خلال اليوم والأسبوع.'},
+];
+
+const PROJECTS = [
+  {
+    title: 'سجل الملاحظات الميدانية',
+    category: 'تطبيقات ويب',
+    image: 'img/notes.png',
+    summary: 'تطبيق موحّد لفريق الإشراف لتسجيل ملاحظات الموقع ومتابعتها حتى الإغلاق، ببيانات مشتركة بين كل الفريق.',
+    features: [
+      'تسجيل الملاحظة بالمبنى والقسم والموقع والصورة',
+      'إصدار تقرير استشاري بشعارات الجهات وتوقيع المهندس',
+      'تصدير Excel وإرسال بالبريد وواتساب لمدير الفريق',
+      'نسخ احتياطي على Dropbox وحماية بكلمة سر',
+    ],
+    tags: ['HTML', 'CSS', 'JavaScript', 'Excel', 'Dropbox API'],
+    demo: '../index.html',
+  },
+  {
+    title: 'لوحة تحكم مدير الفريق',
+    category: 'لوحات تحكم',
+    image: 'img/dashboard.png',
+    summary: 'لوحة مخصّصة لمدير الفريق لمراقبة الملاحظات والتقارير الصادرة وإدارة صلاحيات الدخول.',
+    features: [
+      'إحصائيات: الإجمالي، المفتوح، العاجل، المنجز',
+      'تصفية حسب اليوم وآخر 7 أيام وكل الفترات',
+      'سجل كامل للتقارير والمستندات مع تصدير Excel',
+    ],
+    tags: ['JavaScript', 'Dashboard', 'Excel'],
+    demo: '../dashboard.html',
+  },
+  // لإضافة عمل جديد: انسخ القالب التالي واملأه، وضع صورته داخل مجلد img
+  // {
+  //   title: 'اسم المشروع',
+  //   category: 'تصميم هندسي',
+  //   image: 'img/project3.png',
+  //   summary: 'وصف مختصر',
+  //   features: ['ميزة 1', 'ميزة 2'],
+  //   tags: ['AutoCAD'],
+  //   demo: '',
+  // },
+];
+
+const SKILLS = ['HTML / CSS', 'JavaScript', 'تصميم واجهات عربية RTL', 'Excel', 'Dropbox API', 'الإشراف الهندسي', 'إعداد تقارير الاستشاري', 'AutoCAD', 'Revit'];
+
+/* ========================= نهاية جزء التعديل ========================= */
+
+const ICONS = {
+  app:    '<path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm4 17h2"/>',
+  report: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/>',
+  sheet:  '<path d="M4 4h16v16H4zM4 10h16M4 15h16M10 4v16"/>',
+  dash:   '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+document.querySelectorAll('[data-field]').forEach(el => { el.textContent = PROFILE[el.dataset.field] || ''; });
+document.title = 'معرض الأعمال — ' + PROFILE.name;
+document.getElementById('year').textContent = new Date().getFullYear();
+
+document.getElementById('stats').innerHTML = PROFILE.stats.map(s =>
+  `<div class="stat"><div class="num">${esc(s.num)}</div><div class="lbl">${esc(s.lbl)}</div></div>`).join('');
+
+document.getElementById('servicesList').innerHTML = SERVICES.map(s => `
+  <div class="service">
+    <div class="ico"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${ICONS[s.icon] || ICONS.app}</svg></div>
+    <h3>${esc(s.title)}</h3><p>${esc(s.text)}</p>
+  </div>`).join('');
+
+function renderProjects(filter){
+  const list = PROJECTS.filter(p => filter === 'الكل' || p.category === filter);
+  document.getElementById('projectsList').innerHTML = list.map(p => `
+    <article class="project">
+      <div class="shot${p.image ? '' : ' placeholder'}">${p.image ? `<img src="${esc(p.image)}" alt="${esc(p.title)}" loading="lazy">` : 'لا توجد صورة'}</div>
+      <div class="body">
+        <h3>${esc(p.title)}</h3>
+        <p>${esc(p.summary)}</p>
+        ${p.features && p.features.length ? `<ul>${p.features.map(f => `<li>${esc(f)}</li>`).join('')}</ul>` : ''}
+        <div class="tags">${(p.tags || []).map(t => `<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="links">${p.demo ? `<a href="${esc(p.demo)}" target="_blank" rel="noopener">معاينة مباشرة ↗</a>` : ''}</div>
+      </div>
+    </article>`).join('');
+}
+const categories = ['الكل', ...new Set(PROJECTS.map(p => p.category))];
+const filtersEl = document.getElementById('filters');
+filtersEl.innerHTML = categories.map((c, i) => `<button type="button" class="${i === 0 ? 'active' : ''}">${esc(c)}</button>`).join('');
+filtersEl.addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  filtersEl.querySelectorAll('button').forEach(x => x.classList.toggle('active', x === b));
+  renderProjects(b.textContent);
+});
+if(categories.length <= 2) filtersEl.style.display = 'none';
+renderProjects('الكل');
+
+document.getElementById('skillsList').innerHTML = SKILLS.map(s => `<span>${esc(s)}</span>`).join('');
+
+const c = PROFILE.contact, links = [];
+if(c.mostaql)  links.push(`<a class="btn primary" href="${esc(c.mostaql)}" target="_blank" rel="noopener">ملفي على مستقل</a>`);
+if(c.whatsapp) links.push(`<a class="btn ghost" href="${esc(c.whatsapp)}" target="_blank" rel="noopener">واتساب</a>`);
+if(c.email)    links.push(`<a class="btn ghost" href="mailto:${esc(c.email)}">البريد الإلكتروني</a>`);
+document.getElementById('contactLinks').innerHTML = links.join('');
+
+const lb = document.getElementById('lightbox');
+document.getElementById('projectsList').addEventListener('click', e => {
+  const img = e.target.closest('.shot img'); if(!img) return;
+  lb.querySelector('img').src = img.src; lb.classList.add('open');
+});
+lb.addEventListener('click', () => lb.classList.remove('open'));
+document.addEventListener('keydown', e => { if(e.key === 'Escape') lb.classList.remove('open'); });
+</script>
+</body>
+</html>
