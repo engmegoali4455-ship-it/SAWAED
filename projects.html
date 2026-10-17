@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>إدارة مشاريع الإشراف</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+:root{
+  --paper:#F1EEE9; --card:#FFFFFF; --ink:#231F1C; --ink-soft:#726A62; --line:#E0DAD2;
+  --brand:#E85E30; --brand-dark:#C94A22; --ink-deep:#221F1D;
+  --amber:#B9861A; --amber-bg:#F6E8C9; --red:#B23B2C; --red-bg:#F5DAD3; --green:#3F7A52; --green-bg:#DEEBE1;
+  --blue:#2F5F86; --blue-bg:#DCE7F0;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{background:var(--paper);color:var(--ink);font-family:'IBM Plex Sans Arabic',sans-serif;min-height:100vh;padding-bottom:80px;}
+body.locked .main, body.locked .fab{display:none !important;}
+.mono{font-family:'IBM Plex Mono','IBM Plex Sans Arabic',monospace;}
+.wrap{max-width:900px;margin:0 auto;padding:0 14px;}
+
+header.topbar{position:sticky;top:0;z-index:20;background:var(--ink-deep);color:#F1EEE9;padding:14px;border-bottom:3px solid var(--brand);}
+header.topbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+header.topbar h1{font-size:17px;margin:0;font-weight:600;}
+header.topbar .sub{font-size:12px;color:#C9BEB5;}
+header.topbar nav{display:flex;gap:12px;flex-wrap:wrap;}
+header.topbar a{color:#F1EEE9;font-size:12px;text-decoration:underline;}
+
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0 8px;}
+.stat{background:var(--ink-deep);color:#fff;border-radius:6px;padding:10px 6px;text-align:center;cursor:default;}
+.stat[data-filter]{cursor:pointer;}
+.stat.sel{outline:2px solid var(--brand);outline-offset:1px;}
+.stat .num{font-size:19px;font-weight:600;font-family:'IBM Plex Mono';}
+.stat .lbl{font-size:11px;color:#C9BEB5;margin-top:2px;}
+.stat.warn .num{color:#F0B45C;} .stat.ok .num{color:#8FCBA1;} .stat.bad .num{color:#F19A8A;} .stat.info .num{color:#9DC3E2;}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.toolbar input,.toolbar select{flex:1;min-width:130px;font-family:inherit;font-size:16px;padding:8px 9px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink);}
+
+.btn{font-family:inherit;font-size:14px;font-weight:600;padding:9px 14px;border-radius:4px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff;}
+.btn.primary:hover{background:var(--brand-dark);}
+.btn.danger{color:var(--red);border-color:var(--red-bg);}
+.btn.small{font-size:12.5px;padding:6px 10px;}
+.btn:disabled{opacity:.45;cursor:default;}
+.btn:focus-visible,input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px;}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px;}
+.card h2{font-size:15px;margin:0 0 10px;color:var(--brand-dark);}
+.proj-card{cursor:pointer;transition:border-color .15s;}
+.proj-card:hover{border-color:var(--brand);}
+.proj-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.proj-head h3{margin:0 0 3px;font-size:15px;line-height:1.5;}
+.meta{font-size:12.5px;color:var(--ink-soft);}
+.meta span+span::before{content:" · ";}
+.chips{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0;}
+
+.badge{display:inline-block;font-size:11.5px;font-weight:600;padding:3px 8px;border-radius:999px;white-space:nowrap;}
+.b-green{background:var(--green-bg);color:var(--green);}
+.b-amber{background:var(--amber-bg);color:var(--amber);}
+.b-red{background:var(--red-bg);color:var(--red);}
+.b-blue{background:var(--blue-bg);color:var(--blue);}
+.b-grey{background:#ECE8E2;color:var(--ink-soft);}
+
+.bar-line{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:8px;}
+.bar-line .lbl{flex-shrink:0;color:var(--ink-soft);min-width:0;}
+.bar-line .val{width:42px;text-align:left;flex-shrink:0;}
+.bar{flex:1;height:8px;background:#ECE8E2;border-radius:4px;overflow:hidden;}
+.bar i{display:block;height:100%;border-radius:4px;background:var(--brand);}
+
+table.dist{width:100%;border-collapse:collapse;font-size:12.5px;}
+table.dist td,table.dist th{padding:5px 4px;border-bottom:1px solid var(--line);text-align:right;}
+table.dist th{color:var(--ink-soft);font-weight:600;font-size:11.5px;}
+table.dist td.n{font-family:'IBM Plex Mono';text-align:center;width:44px;}
+table.dist tr.cur td{background:var(--amber-bg);}
+table.dist tr.past td{color:var(--ink-soft);}
+.bucket{display:flex;align-items:center;gap:8px;font-size:12.5px;margin-bottom:7px;}
+.bucket .lbl{width:68px;flex-shrink:0;}
+.bucket .bar{height:14px;}
+.bucket .val{width:24px;text-align:center;font-family:'IBM Plex Mono';}
+
+.back{display:inline-block;margin:14px 0 6px;font-size:13px;color:var(--brand-dark);cursor:pointer;background:none;border:0;font-family:inherit;padding:0;}
+.tabs{display:flex;gap:4px;overflow-x:auto;border-bottom:1px solid var(--line);margin:10px 0 12px;}
+.tab{font-family:inherit;font-size:13.5px;padding:9px 12px;border:0;background:none;color:var(--ink-soft);cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;}
+.tab.active{color:var(--ink);font-weight:600;border-bottom-color:var(--brand);}
+.tab .cnt{font-family:'IBM Plex Mono';font-size:11px;background:#ECE8E2;border-radius:8px;padding:0 6px;margin-inline-start:4px;}
+
+.kv{display:grid;grid-template-columns:repeat(3,1fr);gap:10px 16px;}
+.kv div{font-size:13px;overflow-wrap:anywhere;}
+.kv b{display:block;font-size:11.5px;color:var(--ink-soft);font-weight:600;margin-bottom:2px;}
+
+.rec{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px;background:var(--card);}
+.rec-top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start;}
+.rec-title{font-weight:600;font-size:14px;}
+.rec-body{font-size:13px;color:var(--ink);margin-top:5px;white-space:pre-wrap;}
+.rec-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;}
+
+.empty{text-align:center;padding:36px 16px;color:var(--ink-soft);font-size:13.5px;}
+
+.overlay{position:fixed;inset:0;background:rgba(34,31,29,.55);z-index:50;display:none;align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px 12px;}
+.overlay.show{display:flex;}
+.modal{background:var(--card);border-radius:8px;width:100%;max-width:560px;padding:18px;}
+.modal h2{margin:0 0 14px;font-size:16px;color:var(--brand-dark);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+.field{margin-bottom:10px;}
+.field.full{grid-column:1/-1;}
+.field label{display:block;font-size:12px;color:var(--ink-soft);margin-bottom:4px;font-weight:600;}
+.field input,.field select,.field textarea{width:100%;font-family:inherit;font-size:16px;padding:8px 9px;border:1px solid var(--line);border-radius:4px;background:#fff;color:var(--ink);}
+.field textarea{min-height:76px;resize:vertical;}
+.field .hint{font-size:11.5px;color:var(--ink-soft);margin-top:3px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-start;margin-top:6px;}
+.err{color:var(--red);font-size:12.5px;min-height:18px;}
+.stage-row{display:flex;gap:8px;align-items:center;margin-bottom:6px;}
+.stage-row input[type=text]{flex:1;}
+.stage-row input[type=number]{width:74px;}
+.stage-row input{font-family:inherit;font-size:15px;padding:6px 8px;border:1px solid var(--line);border-radius:4px;}
+
+#gateOverlay{position:fixed;inset:0;background:var(--ink-deep);z-index:60;display:flex;align-items:center;justify-content:center;padding:16px;}
+#gateOverlay .modal{max-width:360px;text-align:center;}
+
+.fab{position:fixed;bottom:18px;left:18px;z-index:30;border-radius:999px;padding:13px 20px;box-shadow:0 4px 14px rgba(0,0,0,.2);}
+
+@media (max-width:640px){
+  .stat-row{grid-template-columns:repeat(2,1fr);}
+  .two,.grid2{grid-template-columns:1fr;}
+  .kv{grid-template-columns:1fr 1fr;}
+  .proj-head{flex-direction:column;}
+  .chips{justify-content:flex-start;}
+}
+@media print{
+  header.topbar,.toolbar,.tabs,.rec-actions,.fab,.back,.no-print{display:none !important;}
+  body{background:#fff;padding:0;}
+  .card,.rec{break-inside:avoid;}
+}
+</style>
+</head>
+<body class="locked">
+
+<div id="gateOverlay">
+  <div class="modal">
+    <h2>إدارة مشاريع الإشراف</h2>
+    <div id="gateStep1">
+      <div class="field"><input type="password" id="gatePass" placeholder="كلمة السر" autocomplete="off"></div>
+      <div class="err" id="gateErr"></div>
+      <button class="btn primary" id="gateBtn" style="width:100%">دخول</button>
+    </div>
+    <div id="gateStep2" style="display:none">
+      <div class="field"><input type="text" id="gateName" placeholder="اسمك (المهندس المشرف)"></div>
+      <div class="err" id="gateNameErr"></div>
+      <button class="btn primary" id="gateNameBtn" style="width:100%">متابعة</button>
+    </div>
+  </div>
+</div>
+
+<header class="topbar">
+  <div class="wrap">
+    <div>
+      <h1>إدارة مشاريع الإشراف — الرقابة المركزية</h1>
+      <div class="sub">شركة سواعد للاستشارات الهندسية<span id="userLabel"></span></div>
+    </div>
+    <nav>
+      <a href="index.html">سجل الملاحظات الميدانية</a>
+      <a href="dashboard.html">لوحة مدير الفريق</a>
+    </nav>
+  </div>
+</header>
+
+<div class="main wrap">
+  <section id="listView">
+    <div class="stat-row">
+      <div class="stat" data-filter=""><div class="num" id="sTotal">0</div><div class="lbl">إجمالي المشاريع</div></div>
+      <div class="stat info"><div class="num" id="sAvg">0%</div><div class="lbl">متوسط نسبة الأعمال</div></div>
+      <div class="stat ok" data-filter="استمرار"><div class="num" id="sOngoing">0</div><div class="lbl">مشاريع مستمرة</div></div>
+      <div class="stat warn" data-filter="قريبا ينتهي"><div class="num" id="sEnding">0</div><div class="lbl">تنتهي قريباً</div></div>
+      <div class="stat info" data-filter="تحت الإجراء"><div class="num" id="sProcedure">0</div><div class="lbl">تحت الإجراء</div></div>
+      <div class="stat" data-filter="تم"><div class="num" id="sDone">0</div><div class="lbl">منتهية (تم)</div></div>
+      <div class="stat bad" data-filter="متوقف"><div class="num" id="sStopped">0</div><div class="lbl">متوقفة</div></div>
+      <div class="stat bad" data-filter="__incomplete"><div class="num" id="sIncomplete">0</div><div class="lbl">بيانات تحتاج استكمال</div></div>
+    </div>
+
+    <div class="two" id="distPanels">
+      <div class="card"><h2>توزيع نسب الأعمال</h2><div id="buckets"></div></div>
+      <div class="card"><h2>توزيع المشاريع على مراحل الرقابة</h2><div id="stageDist"></div></div>
+    </div>
+
+    <div class="toolbar">
+      <input type="text" id="search" placeholder="بحث بالاسم أو الجهة أو رقم المشروع / الرخصة">
+      <select id="statusFilter"></select>
+      <select id="stageFilter"></select>
+    </div>
+    <div class="toolbar">
+      <button class="btn small" id="exportBtn">تصدير Excel</button>
+      <button class="btn small" id="importBtn">استيراد من Excel</button>
+      <button class="btn small" id="stagesBtn">أوزان مراحل الرقابة</button>
+      <input type="file" id="importFile" accept=".xlsx,.xls" style="display:none">
+    </div>
+    <div id="projectList"></div>
+  </section>
+
+  <section id="detailView" style="display:none">
+    <button class="back" id="backBtn">→ كل المشاريع</button>
+    <div id="detailHead"></div>
+    <div class="tabs" id="tabs"></div>
+    <div id="tabBody"></div>
+  </section>
+</div>
+
+<button class="btn primary fab" id="fab">+ مشروع جديد</button>
+
+<div class="overlay" id="formOverlay"><div class="modal">
+  <h2 id="formTitle"></h2>
+  <form id="form" autocomplete="off"><div class="grid2" id="formFields"></div>
+    <div class="err" id="formErr"></div>
+    <div class="modal-actions">
+      <button type="submit" class="btn primary">حفظ</button>
+      <button type="button" class="btn" id="formCancel">إلغاء</button>
+    </div>
+  </form>
+</div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBpjdcJvmPM1ykbyvfjp3enPIZAqPFj8PA",
+  authDomain: "albostan-avenue.firebaseapp.com",
+  projectId: "albostan-avenue",
+  storageBucket: "albostan-avenue.firebasestorage.app",
+  messagingSenderId: "241033392452",
+  appId: "1:241033392452:web:8dcde97e0219817e606711"
+};
+let db = null;
+if(window.firebase){
+  try{ firebase.initializeApp(firebaseConfig); db = firebase.firestore(); }catch(e){ db = null; }
+}
+
+const DEFAULT_TEAM_PASSWORD = '2030';
+const LOCAL_KEY = 'sv_local_store';
+let sessionName = '';
+let projects = [];
+let records = [];
+let currentProjectId = null;
+let currentTab = 'overview';
+
+/* ===================== مراحل الرقابة المركزية ===================== */
+// الأوزان الافتراضية من ملف المتابعة، وقابلة للتعديل من شاشة «أوزان مراحل الرقابة»
+const DEFAULT_STAGES = [
+  {name:'أعمال تجهيز الموقع', weight:3},
+  {name:'بدء المشروع', weight:4},
+  {name:'قبل صب الأساسات', weight:10},
+  {name:'قبل صب الميدات', weight:8},
+  {name:'قبل صب سقف كل دور', weight:20},
+  {name:'نهاية أعمال العظم وبداية أعمال التمديدات الإلكتروميكانيك', weight:10},
+  {name:'نهاية أعمال الواجهات وبداية أعمال العزل', weight:8},
+  {name:'نهاية أعمال التمديد للأعمال الإلكتروميكانيك', weight:10},
+  {name:'أعمال البلاط وتركيب النوافذ والأبواب', weight:12},
+  {name:'التسليم النهائي', weight:10},
+  {name:'إصدار شهادة الإشغال', weight:5}
+];
+let stages = DEFAULT_STAGES.slice();
+
+function stageIndex(name){ return stages.findIndex(s => s.name === name); }
+function stageCumulative(idx){
+  let sum = 0;
+  for(let i = 0; i <= idx; i++) sum += Number(stages[i].weight) || 0;
+  return sum;
+}
+
+/* ===================== تعريف البيانات ===================== */
+const PROJECT_STATUS = {
+  'استمرار':{label:'استمرار', cls:'b-green'},
+  'قريبا ينتهي':{label:'قريباً ينتهي', cls:'b-amber'},
+  'تحت الإجراء':{label:'تحت الإجراء', cls:'b-blue'},
+  'تم':{label:'تم', cls:'b-grey'},
+  'متوقف':{label:'متوقف', cls:'b-red'}
+};
+const ACCOUNT_OPTIONS = {'المعمارية':{label:'المعمارية'}, 'الاستشارات':{label:'الاستشارات'}, '-':{label:'-'}};
+const INVOICE_OPTIONS = {'مستخلص جاري':{label:'مستخلص جاري'}, 'نظام الزيارات':{label:'نظام الزيارات'}, '-':{label:'-'}};
+
+function projectFields(){
+  const stageOpts = {'':{label:'— اختر المرحلة —'}};
+  stages.forEach((s, i) => { stageOpts[s.name] = {label:`${i + 1}. ${s.name} (${stageCumulative(i)}%)`}; });
+  return [
+    {k:'name', label:'اسم المشروع', required:true, full:true},
+    {k:'owner', label:'الجهة المالكة'},
+    {k:'code', label:'رقم المشروع'},
+    {k:'account', label:'المستخدم (حساب المنصة)', type:'select', options:ACCOUNT_OPTIONS, def:'المعمارية'},
+    {k:'license', label:'رقم الرخصة'},
+    {k:'request', label:'رقم الطلب'},
+    {k:'service', label:'رقم الخدمة'},
+    {k:'stage', label:'المرحلة الحالية', type:'select', options:stageOpts, full:true},
+    {k:'stageNote', label:'مرحلة المشروع بالنظام (تفصيل)', full:true},
+    {k:'status', label:'الحالة', type:'select', options:PROJECT_STATUS, def:'استمرار'},
+    {k:'invoiceType', label:'نوع المستخلص', type:'select', options:INVOICE_OPTIONS, def:'مستخلص جاري'},
+    {k:'engineer', label:'المهندس المسؤول'},
+    {k:'override', label:'تعديل يدوي للنسبة % (اختياري)', type:'number', min:0, max:100, hint:'اتركه فارغاً لتُحسب النسبة من المرحلة.'},
+    {k:'notes', label:'ملاحظات عامة', type:'textarea', full:true}
+  ];
+}
+
+// كل نوع سجل داخل المشروع: الحقول + طريقة العرض
+const KINDS = {
+  visit:{
+    tab:'الزيارات والتقارير', single:'زيارة / تقرير', prefix:'VR',
+    fields:[
+      {k:'refNo', label:'رقم التقرير', auto:true},
+      {k:'date', label:'تاريخ الزيارة', type:'date', today:true},
+      {k:'visitType', label:'نوع الزيارة', type:'select', options:{routine:{label:'زيارة دورية'}, inspection:{label:'زيارة فحص'}, handover:{label:'زيارة استلام'}, emergency:{label:'زيارة طارئة'}}, def:'routine'},
+      {k:'manpower', label:'عدد العمالة بالموقع', type:'number'},
+      {k:'title', label:'ما تم مشاهدته / الأعمال الجارية', type:'textarea', required:true, full:true},
+      {k:'issues', label:'معوقات / ملاحظات السلامة', type:'textarea', full:true},
+      {k:'author', label:'المهندس الزائر', me:true}
+    ]
+  },
+  inspection:{
+    tab:'طلبات الفحص', single:'طلب فحص', prefix:'IR',
+    status:{pending:{label:'قيد الفحص', cls:'b-amber'}, approved:{label:'معتمد', cls:'b-green'}, comments:{label:'معتمد بملاحظات', cls:'b-blue'}, rejected:{label:'مرفوض', cls:'b-red'}},
+    fields:[
+      {k:'refNo', label:'رقم الطلب', auto:true},
+      {k:'type', label:'النوع', type:'select', options:{WIR:{label:'فحص أعمال WIR'}, MIR:{label:'فحص مواد MIR'}}, def:'WIR'},
+      {k:'discipline', label:'التخصص', type:'select', options:{arch:{label:'معماري'}, str:{label:'إنشائي'}, elec:{label:'كهرباء'}, mech:{label:'ميكانيكا'}, civil:{label:'مدني / موقع عام'}}, def:'str'},
+      {k:'date', label:'تاريخ الفحص', type:'date', today:true},
+      {k:'title', label:'وصف العمل / المادة', required:true, full:true},
+      {k:'location', label:'الموقع / الدور', full:true},
+      {k:'status', label:'النتيجة', type:'select', statusField:true, def:'pending'},
+      {k:'inspector', label:'المهندس الفاحص', me:true},
+      {k:'notes', label:'ملاحظات الفحص', type:'textarea', full:true}
+    ]
+  },
+  payment:{
+    tab:'المستخلصات', single:'مستخلص', prefix:'PC',
+    status:{review:{label:'قيد المراجعة', cls:'b-amber'}, certified:{label:'معتمد', cls:'b-blue'}, paid:{label:'مصروف', cls:'b-green'}, returned:{label:'معاد', cls:'b-red'}},
+    fields:[
+      {k:'refNo', label:'رقم المستخلص', auto:true},
+      {k:'date', label:'التاريخ', type:'date', today:true},
+      {k:'title', label:'البيان / المرحلة', required:true, full:true},
+      {k:'amount', label:'المبلغ (ريال)', type:'number'},
+      {k:'status', label:'الحالة', type:'select', statusField:true, def:'review'},
+      {k:'notes', label:'ملاحظات', type:'textarea', full:true}
+    ]
+  },
+  letter:{
+    tab:'المراسلات', single:'خطاب', prefix:'LTR',
+    status:{open:{label:'بانتظار الرد', cls:'b-amber'}, replied:{label:'تم الرد', cls:'b-green'}, info:{label:'للعلم', cls:'b-grey'}},
+    fields:[
+      {k:'refNo', label:'رقم المرجع', auto:true},
+      {k:'direction', label:'الاتجاه', type:'select', options:{in:{label:'وارد'}, out:{label:'صادر'}}, def:'out'},
+      {k:'party', label:'الجهة', type:'select', options:{owner:{label:'المالك'}, contractor:{label:'المقاول'}, authority:{label:'الأمانة / البلدية'}, other:{label:'أخرى'}}, def:'owner'},
+      {k:'date', label:'التاريخ', type:'date', today:true},
+      {k:'title', label:'الموضوع', required:true, full:true},
+      {k:'dueDate', label:'تاريخ الرد المطلوب', type:'date'},
+      {k:'status', label:'الحالة', type:'select', statusField:true, def:'open'},
+      {k:'notes', label:'الملخص', type:'textarea', full:true}
+    ]
+  },
+  issue:{
+    tab:'الملاحظات والمخالفات', single:'ملاحظة / مخالفة', prefix:'NCR',
+    status:{open:{label:'مفتوحة', cls:'b-amber'}, urgent:{label:'عاجلة', cls:'b-red'}, closed:{label:'مغلقة', cls:'b-green'}},
+    fields:[
+      {k:'refNo', label:'الرقم', auto:true},
+      {k:'category', label:'التصنيف', type:'select', options:{ncr:{label:'عدم مطابقة NCR'}, safety:{label:'سلامة'}, delay:{label:'تأخير'}, design:{label:'تعارض تصميمي'}, other:{label:'أخرى'}}, def:'ncr'},
+      {k:'date', label:'تاريخ الرصد', type:'date', today:true},
+      {k:'dueDate', label:'موعد الإغلاق', type:'date'},
+      {k:'title', label:'الوصف', type:'textarea', required:true, full:true},
+      {k:'action', label:'الإجراء التصحيحي المطلوب', type:'textarea', full:true},
+      {k:'status', label:'الحالة', type:'select', statusField:true, def:'open'}
+    ]
+  }
+};
+
+// مشاريع ملف «لوحة متابعة مشاريع الإشراف الهندسي» — تُحمَّل مرة واحدة عند أول استخدام
+const SEED_PROJECTS = [{"name": "مشروع الإشراف على تنفيذ برج وتد العجلان ريفيرا - حي الملقا","owner": "العجلان ريفيرا","code": "25116","account": "المعمارية","license": "2820-1445","request": "","service": "","stage": "قبل صب سقف كل دور","stageNote": "قبل سقف الحادي عشر","status": "استمرار","invoiceType": "مستخلص جاري","notes": "مرحلة أعمال العظم (طاقم إشراف كامل)"},{"name": "مشروع الإشراف على تنفيذ عمارة السيار - حي النرجس","owner": "أ/محمد السيار","code": "25115","account": "المعمارية","license": "34739-1446","request": "","service": "","stage": "نهاية أعمال العظم وبداية أعمال التمديدات الإلكتروميكانيك","stageNote": "نهاية العظم وبداية الإلكتروميكانيك - ملحق","status": "استمرار","invoiceType": "نظام الزيارات","notes": "تم الانتهاء من استلام أعمال العظم (جاري متابعة وزيارات فقط)"},{"name": "مشروع الإشراف على فيلا الشهراني - حي العليا","owner": "أ/عبدالحكيم الشهراني","code": "24102","account": "المعمارية","license": "8156-1446","request": "","service": "","stage": "نهاية أعمال العظم وبداية أعمال التمديدات الإلكتروميكانيك","stageNote": "نهاية العظم وبداية الإلكتروميكانيك - ملحق","status": "استمرار","invoiceType": "-","notes": "متابعة وزيارات فقط"},{"name": "مشروع الإشراف على مجمع عمائر سكنية شركة جادة - حي العارض","owner": "شركة جادة للتطوير العقاري","code": "25117","account": "المعمارية","license": "13296-1444","request": "","service": "","stage": "نهاية أعمال الواجهات وبداية أعمال العزل","stageNote": "نهاية أعمال الواجهات - ملحق علوي","status": "استمرار","invoiceType": "مستخلص جاري","notes": "مرحلة ما قبل تسليم المشروع بشكل كامل"},{"name": "مشروع الإشراف على مستشفى جراحات اليوم الواحد - حي القيروان","owner": "شركة مدماك للتطوير العقاري","code": "23129","account": "المعمارية","license": "16990-1444","request": "25845-1448","service": "208692-1448","stage": "إصدار شهادة الإشغال","stageNote": "شهادة إتمام","status": "قريبا ينتهي","invoiceType": "مستخلص جاري","notes": "مرحلة تسليم المشروع بشكل كامل (متابعة وزيارات) إلكتروميكانيك"},{"name": "مشروع الإشراف على عمارتين سكنيتين ركايا 7-8 - حي الفاروق","owner": "شركة ركايا للتطوير العقاري","code": "25114","account": "المعمارية","license": "31533-1446","request": "138329-1448","service": "","stage": "التسليم النهائي","stageNote": "التسليم النهائي","status": "قريبا ينتهي","invoiceType": "مستخلص جاري","notes": "مرحلة تسليم المشروع بشكل كامل"},{"name": "مشروع الإشراف على عمارتين سكنيتين ركايا 7-8 - حي الفاروق","owner": "شركة ركايا للتطوير العقاري","code": "25114","account": "المعمارية","license": "35264-1446","request": "432987-1447","service": "","stage": "نهاية أعمال العظم وبداية أعمال التمديدات الإلكتروميكانيك","stageNote": "نهاية العظم وبداية الإلكتروميكانيك - ملحق","status": "استمرار","invoiceType": "مستخلص جاري","notes": "مرحلة ما قبل تسليم المشروع بشكل كامل"},{"name": "مشروع الإشراف على تنفيذ تاون هاوس - حي الشرفية","owner": "شركة مساكن إشراقة العقارية","code": "26109-24131","account": "المعمارية","license": "31047-1446","request": "395052-1447","service": "","stage": "قبل صب سقف كل دور","stageNote": "قبل صب الأول","status": "استمرار","invoiceType": "-","notes": "متابعة وزيارات فقط"},{"name": "مشروع الإشراف على عمارة سكنية - مغنى 101 - حي الملك سلمان","owner": "شركة مغنى التميز العقارية","code": "26107","account": "الاستشارات","license": "10162-1447","request": "434022-1447","service": "","stage": "قبل صب سقف كل دور","stageNote": "قبل صب الملحق","status": "استمرار","invoiceType": "نظام الزيارات","notes": "تم الانتهاء من استلام أعمال العظم (جاري متابعة وزيارات فقط)"},{"name": "مشروع الإشراف على تنفيذ برج الماجد - حي القيروان","owner": "م. خالد بن علي الماجد للتطوير العقاري","code": "24115","account": "الاستشارات","license": "16871-1445","request": "439018-1447","service": "","stage": "أعمال البلاط وتركيب النوافذ والأبواب","stageNote": "أعمال البلاط وتركيب النوافذ والأبواب - الملحق العلوي","status": "قريبا ينتهي","invoiceType": "مستخلص جاري","notes": "مرحلة تسليم المشروع بشكل كامل (متابعة وزيارات) إلكتروميكانيك"},{"name": "مشروع الإشراف على تنفيذ فيلا معاذ الصوع - حي العارض","owner": "أ/معاذ الصوع","code": "26117","account": "الاستشارات","license": "20264741-1448","request": "","service": "","stage": "قبل صب الميدات","stageNote": "قبل صب الميدات","status": "استمرار","invoiceType": "-","notes": "متابعة وزيارات فقط"},{"name": "مشروع الإشراف على تنفيذ برج تلاد - حي الياسمين","owner": "شركة تلاد العقارية","code": "26111","account": "-","license": "-","request": "","service": "","stage": "أعمال تجهيز الموقع","stageNote": "-","status": "استمرار","invoiceType": "مستخلص جاري","notes": "مرحلة بداية المشروع (طاقم إشراف كامل)"}];
+
+/* ===================== أدوات عامة ===================== */
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+function todayStr(){ const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,10); }
+function parseDate(s){ if(!s) return null; const d = new Date(s + 'T00:00:00'); return isNaN(d) ? null : d; }
+function fmtDate(s){ const d = parseDate(s); return d ? d.toLocaleDateString('ar-EG', {day:'2-digit', month:'2-digit', year:'numeric'}) : '—'; }
+function fmtMoney(n){ return (Number(n) || 0).toLocaleString('ar-EG', {maximumFractionDigits:0}); }
+function clampPct(n){ n = Number(n); return isNaN(n) ? 0 : Math.max(0, Math.min(100, n)); }
+function blank(v){ return v == null || String(v).trim() === '' || String(v).trim() === '-'; }
+
+/* ===================== التخزين: Firebase مع نسخة محلية احتياطية ===================== */
+function loadLocal(){
+  try{ const s = JSON.parse(localStorage.getItem(LOCAL_KEY) || '{}'); return {projects:s.projects || [], records:s.records || [], stages:s.stages}; }
+  catch(e){ return {projects:[], records:[]}; }
+}
+function saveLocal(){
+  try{ localStorage.setItem(LOCAL_KEY, JSON.stringify({projects, records, stages})); }catch(e){}
+}
+
+function subscribeData(){
+  const cached = loadLocal();
+  projects = cached.projects; records = cached.records;
+  if(Array.isArray(cached.stages) && cached.stages.length) stages = cached.stages;
+  render();
+  if(!db){
+    showBanner('وضع محلي: لم يتم الاتصال بـ Firebase، البيانات محفوظة على هذا الجهاز فقط.');
+    if(!projects.length) offerSeed();
+    return;
+  }
+  let first = true;
+  db.collection('sv_projects').onSnapshot(snap => {
+    projects = snap.docs.map(d => d.data()); saveLocal(); render();
+    if(first){ first = false; if(!projects.length) offerSeed(); }
+  }, () => showBanner('تعذّر الاتصال بقاعدة البيانات، يتم عرض آخر نسخة محفوظة على الجهاز.'));
+  db.collection('sv_records').orderBy('ts', 'desc').limit(5000).onSnapshot(snap => {
+    records = snap.docs.map(d => d.data()); saveLocal(); render();
+  }, () => {});
+  db.collection('meta').doc('sv_stages').onSnapshot(doc => {
+    if(doc.exists && Array.isArray(doc.data().stages) && doc.data().stages.length){ stages = doc.data().stages; saveLocal(); render(); }
+  }, () => {});
+}
+
+async function putDoc(coll, obj){
+  const list = coll === 'sv_projects' ? projects : records;
+  const i = list.findIndex(x => x.id === obj.id);
+  if(i >= 0) list[i] = obj; else list.unshift(obj);
+  saveLocal(); render();
+  if(db){ try{ await db.collection(coll).doc(obj.id).set(obj); }catch(e){ alert('تعذّر الحفظ على السحابة: ' + e.message); } }
+}
+async function putMany(coll, objs){
+  objs.forEach(o => { const i = projects.findIndex(x => x.id === o.id); if(i >= 0) projects[i] = o; else projects.push(o); });
+  saveLocal(); render();
+  if(!db) return;
+  try{
+    for(let i = 0; i < objs.length; i += 400){
+      const batch = db.batch();
+      objs.slice(i, i + 400).forEach(o => batch.set(db.collection(coll).doc(o.id), o));
+      await batch.commit();
+    }
+  }catch(e){ alert('تعذّر الحفظ على السحابة: ' + e.message); }
+}
+async function removeDoc(coll, id){
+  if(coll === 'sv_projects') projects = projects.filter(x => x.id !== id);
+  else records = records.filter(x => x.id !== id);
+  saveLocal(); render();
+  if(db){ try{ await db.collection(coll).doc(id).delete(); }catch(e){ alert('تعذّر الحذف: ' + e.message); } }
+}
+async function saveStages(list){
+  stages = list; saveLocal(); render();
+  if(db){ try{ await db.collection('meta').doc('sv_stages').set({stages:list, updatedBy:sessionName, ts:Date.now()}); }catch(e){ alert('تعذّر حفظ الأوزان: ' + e.message); } }
+}
+
+function showBanner(text){
+  let bar = document.getElementById('banner');
+  if(!bar){
+    bar = document.createElement('div'); bar.id = 'banner';
+    bar.style.cssText = 'background:#F7E7D0;color:#8A5A17;font-size:12.5px;text-align:center;padding:8px 14px;border-bottom:1px solid #D9A05B;';
+    document.body.insertBefore(bar, document.querySelector('.main'));
+  }
+  bar.textContent = text;
+}
+
+function offerSeed(){
+  if(!SEED_PROJECTS.length) return;
+  if(!confirm(`لا توجد مشاريع بعد. هل تريد تحميل ${SEED_PROJECTS.length} مشروعاً من ملف لوحة المتابعة الحالي؟`)) return;
+  const now = Date.now();
+  putMany('sv_projects', SEED_PROJECTS.map((p, i) => Object.assign({}, p, {
+    id:uid(), ts:now + i, createdBy:sessionName, updatedAt:now, updatedBy:sessionName,
+    stageHistory:p.stage ? [{stage:p.stage, date:todayStr(), by:sessionName}] : []
+  })));
+}
+
+/* ===================== حسابات المشروع ===================== */
+function projectRecords(pid, kind){ return records.filter(r => r.projectId === pid && (!kind || r.kind === kind)); }
+
+function dataCheck(p){
+  if(blank(p.stage)) return 'المرحلة غير محددة';
+  if(stageIndex(p.stage) < 0) return 'اسم المرحلة غير مطابق';
+  if(blank(p.name)) return 'اسم المشروع ناقص';
+  if(blank(p.status)) return 'الحالة غير محددة';
+  return '';
+}
+
+function projectStats(p){
+  const idx = stageIndex(p.stage);
+  const hasOverride = p.override !== '' && p.override != null;
+  const pct = hasOverride ? clampPct(p.override) : idx >= 0 ? clampPct(stageCumulative(idx)) : 0;
+  const pendingIR = projectRecords(p.id, 'inspection').filter(r => r.status === 'pending').length;
+  const openIssues = projectRecords(p.id, 'issue').filter(r => r.status !== 'closed').length;
+  const openLetters = projectRecords(p.id, 'letter').filter(r => r.status === 'open').length;
+  const visits = projectRecords(p.id, 'visit').map(r => r.date || '').sort();
+  const lastVisit = visits.length ? visits[visits.length - 1] : '';
+  return {idx, pct, hasOverride, check:dataCheck(p), pendingIR, openIssues, openLetters, lastVisit};
+}
+
+function barHtml(st, label){
+  return `<div class="bar-line"><span class="lbl">${label || 'نسبة الأعمال'}</span><div class="bar"><i style="width:${st.pct}%"></i></div><span class="val mono">${st.pct.toFixed(0)}%</span></div>`;
+}
+function statusBadge(p){
+  const s = PROJECT_STATUS[p.status];
+  return s ? `<span class="badge ${s.cls}">${s.label}</span>` : '<span class="badge b-grey">بدون حالة</span>';
+}
+
+/* ===================== لوحة المتابعة وقائمة المشاريع ===================== */
+const statusFilterEl = document.getElementById('statusFilter');
+const stageFilterEl = document.getElementById('stageFilter');
+statusFilterEl.innerHTML = '<option value="">كل الحالات</option>' + Object.entries(PROJECT_STATUS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('') + '<option value="__incomplete">بيانات تحتاج استكمال</option>';
+statusFilterEl.addEventListener('change', render);
+stageFilterEl.addEventListener('change', render);
+document.getElementById('search').addEventListener('input', render);
+document.querySelectorAll('.stat[data-filter]').forEach(el => el.addEventListener('click', () => {
+  statusFilterEl.value = el.dataset.filter; stageFilterEl.value = '';
+  render();
+  document.getElementById('search').scrollIntoView({behavior:'smooth', block:'center'});
+}));
+
+function renderList(){
+  const sel = stageFilterEl.value;
+  stageFilterEl.innerHTML = '<option value="">كل المراحل</option>' + stages.map(s => `<option value="${escapeHtml(s.name)}">${escapeHtml(s.name)}</option>`).join('');
+  stageFilterEl.value = stages.some(s => s.name === sel) ? sel : '';
+
+  const all = projects.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0));
+  const stats = new Map(all.map(p => [p.id, projectStats(p)]));
+  const count = st => all.filter(p => p.status === st).length;
+  document.getElementById('sTotal').textContent = all.length;
+  document.getElementById('sAvg').textContent = all.length ? (all.reduce((s, p) => s + stats.get(p.id).pct, 0) / all.length).toFixed(0) + '%' : '0%';
+  document.getElementById('sOngoing').textContent = count('استمرار');
+  document.getElementById('sEnding').textContent = count('قريبا ينتهي');
+  document.getElementById('sProcedure').textContent = count('تحت الإجراء');
+  document.getElementById('sDone').textContent = count('تم');
+  document.getElementById('sStopped').textContent = count('متوقف');
+  document.getElementById('sIncomplete').textContent = all.filter(p => stats.get(p.id).check).length;
+  document.querySelectorAll('.stat[data-filter]').forEach(el => el.classList.toggle('sel', !!statusFilterEl.value && el.dataset.filter === statusFilterEl.value));
+
+  // توزيع نسب الأعمال
+  const buckets = [['أقل من 25%', v => v < 25], ['25 – 49%', v => v >= 25 && v < 50], ['50 – 74%', v => v >= 50 && v < 75], ['75 – 99%', v => v >= 75 && v < 100], ['100%', v => v >= 100]];
+  const bc = buckets.map(([, fn]) => all.filter(p => fn(stats.get(p.id).pct)).length);
+  const maxB = Math.max(1, ...bc);
+  document.getElementById('buckets').innerHTML = buckets.map(([lbl], i) => `<div class="bucket"><span class="lbl">${lbl}</span><div class="bar"><i style="width:${bc[i] / maxB * 100}%"></i></div><span class="val">${bc[i]}</span></div>`).join('');
+
+  // توزيع المشاريع على المراحل
+  document.getElementById('stageDist').innerHTML = `<table class="dist"><tr><th>م</th><th>المرحلة</th><th style="text-align:center">التراكمي</th><th style="text-align:center">المشاريع</th></tr>` +
+    stages.map((s, i) => { const n = all.filter(p => stats.get(p.id).idx === i).length; return `<tr><td class="n">${i + 1}</td><td>${escapeHtml(s.name)}</td><td class="n">${stageCumulative(i)}%</td><td class="n" style="font-weight:${n ? 700 : 400}">${n}</td></tr>`; }).join('') + '</table>';
+
+  const q = document.getElementById('search').value.trim();
+  const sf = statusFilterEl.value, stf = stageFilterEl.value;
+  const list = all.filter(p => (!sf || (sf === '__incomplete' ? stats.get(p.id).check : p.status === sf)) && (!stf || p.stage === stf) &&
+    (!q || [p.name, p.owner, p.code, p.license, p.request, p.service, p.engineer].some(v => String(v == null ? '' : v).includes(q))));
+  const el = document.getElementById('projectList');
+  if(!list.length){
+    el.innerHTML = `<div class="empty">${all.length ? 'لا توجد مشاريع مطابقة.' : 'لا توجد مشاريع بعد. اضغط «+ مشروع جديد» أو «استيراد من Excel».'}</div>`;
+    return;
+  }
+  el.innerHTML = list.map((p, n) => {
+    const st = stats.get(p.id);
+    const chips = [];
+    if(st.check) chips.push(`<span class="badge b-red">⚠ ${st.check}</span>`);
+    if(st.pendingIR) chips.push(`<span class="badge b-amber">${st.pendingIR} فحص معلّق</span>`);
+    if(st.openIssues) chips.push(`<span class="badge b-red">${st.openIssues} ملاحظة مفتوحة</span>`);
+    if(st.openLetters) chips.push(`<span class="badge b-blue">${st.openLetters} خطاب بانتظار الرد</span>`);
+    return `<div class="card proj-card" data-id="${p.id}" tabindex="0">
+      <div class="proj-head">
+        <div><h3>${escapeHtml(p.name)}</h3>
+          <div class="meta">${!blank(p.code) ? `<span class="mono">${escapeHtml(p.code)}</span>` : ''}${!blank(p.owner) ? `<span>${escapeHtml(p.owner)}</span>` : ''}${!blank(p.invoiceType) ? `<span>${escapeHtml(p.invoiceType)}</span>` : ''}</div>
+        </div>
+        <div class="chips">${statusBadge(p)}</div>
+      </div>
+      <div class="meta" style="margin-top:8px">${st.idx >= 0 ? `المرحلة ${st.idx + 1}: ${escapeHtml(p.stage)}` : 'المرحلة غير محددة'}${!blank(p.stageNote) ? ` — ${escapeHtml(p.stageNote)}` : ''}</div>
+      ${barHtml(st)}
+      ${chips.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${chips.join('')}</div>` : ''}
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.proj-card').forEach(c => {
+    const open = () => openProject(c.dataset.id);
+    c.addEventListener('click', open);
+    c.addEventListener('keydown', ev => { if(ev.key === 'Enter') open(); });
+  });
+}
+
+/* ===================== تفاصيل المشروع ===================== */
+function openProject(id){ currentProjectId = id; currentTab = 'overview'; render(); window.scrollTo(0, 0); }
+document.getElementById('backBtn').addEventListener('click', () => { currentProjectId = null; render(); });
+
+function renderDetail(){
+  const p = projects.find(x => x.id === currentProjectId);
+  const st = projectStats(p);
+  document.getElementById('detailHead').innerHTML = `<div class="card">
+    <div class="proj-head">
+      <div><h3 style="font-size:16.5px">${escapeHtml(p.name)}</h3><div class="meta">${!blank(p.code) ? `<span class="mono">${escapeHtml(p.code)}</span>` : ''}${!blank(p.owner) ? `<span>${escapeHtml(p.owner)}</span>` : ''}</div></div>
+      <div class="chips">${statusBadge(p)}${st.check ? `<span class="badge b-red">⚠ ${st.check}</span>` : ''}</div>
+    </div>${barHtml(st, st.hasOverride ? 'نسبة يدوية' : 'نسبة الأعمال')}</div>`;
+
+  const tabs = [['overview', 'نظرة عامة', null]].concat(Object.entries(KINDS).map(([k, v]) => [k, v.tab, projectRecords(p.id, k).length]));
+  const tabsEl = document.getElementById('tabs');
+  tabsEl.innerHTML = tabs.map(([k, label, n]) => `<button class="tab ${k === currentTab ? 'active' : ''}" data-tab="${k}">${label}${n != null ? `<span class="cnt">${n}</span>` : ''}</button>`).join('');
+  tabsEl.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => { currentTab = b.dataset.tab; render(); }));
+
+  document.getElementById('tabBody').innerHTML = currentTab === 'overview' ? overviewHtml(p, st) : recordsHtml(p, currentTab);
+  bindDetailActions(p);
+}
+
+function overviewHtml(p, st){
+  const dash = v => blank(v) ? '—' : escapeHtml(v);
+  const history = (p.stageHistory || []).slice().reverse();
+  const certified = projectRecords(p.id, 'payment').filter(r => r.status === 'certified' || r.status === 'paid').reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  return `<div class="card">
+    <h2>بيانات المشروع</h2>
+    <div class="kv">
+      <div><b>الجهة المالكة</b>${dash(p.owner)}</div>
+      <div><b>رقم المشروع</b><span class="mono">${dash(p.code)}</span></div>
+      <div><b>المستخدم</b>${dash(p.account)}</div>
+      <div><b>رقم الرخصة</b><span class="mono">${dash(p.license)}</span></div>
+      <div><b>رقم الطلب</b><span class="mono">${dash(p.request)}</span></div>
+      <div><b>رقم الخدمة</b><span class="mono">${dash(p.service)}</span></div>
+      <div><b>نوع المستخلص</b>${dash(p.invoiceType)}</div>
+      <div><b>المهندس المسؤول</b>${dash(p.engineer)}</div>
+      <div><b>آخر زيارة</b>${st.lastVisit ? fmtDate(st.lastVisit) : '—'}</div>
+    </div>
+    ${!blank(p.notes) ? `<div class="rec-body" style="margin-top:12px"><b style="font-size:11.5px;color:var(--ink-soft)">ملاحظات عامة:</b> ${escapeHtml(p.notes)}</div>` : ''}
+    <div class="rec-actions no-print">
+      <button class="btn small" data-act="editProject">تعديل البيانات</button>
+      <button class="btn small" data-act="exportProject">تصدير Excel</button>
+      <button class="btn small" data-act="print">طباعة</button>
+      <button class="btn small danger" data-act="deleteProject">حذف المشروع</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>مراحل الرقابة المركزية</h2>
+    ${!blank(p.stageNote) ? `<div class="meta" style="margin-bottom:8px">مرحلة المشروع بالنظام: <b style="color:var(--ink)">${escapeHtml(p.stageNote)}</b></div>` : ''}
+    <table class="dist"><tr><th>م</th><th>المرحلة</th><th style="text-align:center">الوزن</th><th style="text-align:center">التراكمي</th></tr>
+    ${stages.map((s, i) => `<tr class="${i === st.idx ? 'cur' : i < st.idx ? 'past' : ''}"><td class="n">${i < st.idx ? '✔' : i + 1}</td><td>${escapeHtml(s.name)}${i === st.idx ? ' <span class="badge b-amber">الحالية</span>' : ''}</td><td class="n">${s.weight}%</td><td class="n">${stageCumulative(i)}%</td></tr>`).join('')}
+    </table>
+    <div class="rec-actions no-print">
+      <button class="btn small" data-act="stagePrev" ${st.idx <= 0 ? 'disabled' : ''}>→ المرحلة السابقة</button>
+      <button class="btn small primary" data-act="stageNext" ${st.idx >= stages.length - 1 ? 'disabled' : ''}>${st.idx < 0 ? 'تحديد المرحلة الأولى' : 'نقل للمرحلة التالية ←'}</button>
+    </div>
+    ${history.length ? `<div class="meta" style="margin-top:12px"><b>سجل تغيير المراحل</b></div>` + history.slice(0, 12).map(h => `<div class="meta" style="margin-top:4px"><span>${fmtDate(h.date)}</span><span>${escapeHtml(h.stage)}</span>${h.by ? `<span>${escapeHtml(h.by)}</span>` : ''}</div>`).join('') : ''}
+  </div>
+  <div class="card">
+    <h2>ملخص المتابعة</h2>
+    <div class="kv">
+      <div><b>طلبات فحص معلّقة</b><span class="mono">${st.pendingIR}</span></div>
+      <div><b>ملاحظات / مخالفات مفتوحة</b><span class="mono">${st.openIssues}</span></div>
+      <div><b>خطابات بانتظار الرد</b><span class="mono">${st.openLetters}</span></div>
+      <div><b>عدد الزيارات</b><span class="mono">${projectRecords(p.id, 'visit').length}</span></div>
+      <div><b>المستخلصات المعتمدة</b><span class="mono">${fmtMoney(certified)} ريال</span></div>
+    </div>
+  </div>`;
+}
+
+function recordsHtml(p, kind){
+  const def = KINDS[kind];
+  const list = projectRecords(p.id, kind).sort((a, b) => (b.date || '').localeCompare(a.date || '') || (b.ts || 0) - (a.ts || 0));
+  const head = `<div class="toolbar no-print"><button class="btn primary" data-act="add">+ ${def.single}</button></div>`;
+  if(!list.length) return head + `<div class="empty">لا توجد سجلات في «${def.tab}» بعد.</div>`;
+  const longText = kind === 'visit' || kind === 'issue';
+  return head + list.map(r => {
+    const st = def.status && def.status[r.status];
+    const extras = def.fields.filter(f => !['refNo', 'title', 'status', 'notes', 'date', 'issues', 'action'].includes(f.k) && !blank(r[f.k]))
+      .map(f => `<span>${f.label}: ${escapeHtml(f.options ? (f.options[r[f.k]] || {}).label || r[f.k] : f.type === 'date' ? fmtDate(r[f.k]) : f.type === 'number' ? fmtMoney(r[f.k]) : r[f.k])}</span>`);
+    const overdue = r.dueDate && r.dueDate < todayStr() && (r.status === 'open' || r.status === 'urgent');
+    const extraText = ['issues', 'action', 'notes'].filter(k => !blank(r[k])).map(k => `<div class="rec-body" style="color:var(--ink-soft)">${escapeHtml(def.fields.find(f => f.k === k).label)}: ${escapeHtml(r[k])}</div>`).join('');
+    return `<div class="rec">
+      <div class="rec-top">
+        <div><div class="rec-title"><span class="mono" style="color:var(--brand-dark)">${escapeHtml(r.refNo || '')}</span> ${longText ? '' : escapeHtml(r.title)}</div>
+        <div class="meta"><span>${fmtDate(r.date)}</span>${extras.join('')}</div></div>
+        <div class="chips">${st ? `<span class="badge ${st.cls}">${st.label}</span>` : ''}${overdue ? '<span class="badge b-red">متأخر</span>' : ''}</div>
+      </div>
+      ${longText ? `<div class="rec-body">${escapeHtml(r.title)}</div>` : ''}
+      ${extraText}
+      <div class="rec-actions no-print">
+        <button class="btn small" data-act="edit" data-id="${r.id}">تعديل</button>
+        <button class="btn small danger" data-act="del" data-id="${r.id}">حذف</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function setStage(p, idx){
+  const name = stages[idx].name;
+  const history = (p.stageHistory || []).concat([{stage:name, date:todayStr(), by:sessionName}]);
+  putDoc('sv_projects', Object.assign({}, p, {stage:name, stageHistory:history, updatedAt:Date.now(), updatedBy:sessionName}));
+}
+
+function bindDetailActions(p){
+  document.querySelectorAll('#tabBody [data-act]').forEach(b => b.addEventListener('click', () => {
+    const act = b.dataset.act;
+    const idx = stageIndex(p.stage);
+    if(act === 'editProject') openProjectForm(p);
+    else if(act === 'stageNext' && idx < stages.length - 1){
+      if(confirm(`نقل المشروع إلى مرحلة «${stages[idx + 1].name}»؟`)) setStage(p, idx + 1);
+    }
+    else if(act === 'stagePrev' && idx > 0){
+      if(confirm(`إرجاع المشروع إلى مرحلة «${stages[idx - 1].name}»؟`)) setStage(p, idx - 1);
+    }
+    else if(act === 'deleteProject'){
+      const n = projectRecords(p.id).length;
+      if(!confirm(`حذف المشروع «${p.name}»${n ? ' مع ' + n + ' سجل مرتبط به' : ''}؟ لا يمكن التراجع.`)) return;
+      projectRecords(p.id).forEach(r => removeDoc('sv_records', r.id));
+      currentProjectId = null;
+      removeDoc('sv_projects', p.id);
+    }
+    else if(act === 'exportProject') exportXlsx([p]);
+    else if(act === 'print') window.print();
+    else if(act === 'add') openRecordForm(p, currentTab, null);
+    else if(act === 'edit') openRecordForm(p, currentTab, records.find(r => r.id === b.dataset.id));
+    else if(act === 'del'){ if(confirm('حذف هذا السجل؟')) removeDoc('sv_records', b.dataset.id); }
+  }));
+}
+
+/* ===================== النماذج ===================== */
+let formSubmit = null;
+const overlay = document.getElementById('formOverlay');
+function closeForm(){ overlay.classList.remove('show'); formSubmit = null; }
+document.getElementById('formCancel').addEventListener('click', closeForm);
+overlay.addEventListener('click', ev => { if(ev.target === overlay) closeForm(); });
+document.addEventListener('keydown', ev => { if(ev.key === 'Escape' && overlay.classList.contains('show')) closeForm(); });
+
+function fieldHtml(f, value, statusOptions){
+  const id = 'f_' + f.k;
+  const v = value == null ? '' : String(value);
+  let input;
+  const opts = f.statusField ? statusOptions : f.options;
+  if(opts){
+    const entries = Object.entries(opts);
+    if(v && !opts[v]) entries.push([v, {label:v + ' (غير مطابق)'}]);
+    input = `<select id="${id}">${entries.map(([k, o]) => `<option value="${escapeHtml(k)}" ${k === v ? 'selected' : ''}>${escapeHtml(o.label)}</option>`).join('')}</select>`;
+  }
+  else if(f.type === 'textarea') input = `<textarea id="${id}">${escapeHtml(v)}</textarea>`;
+  else input = `<input id="${id}" type="${f.type || 'text'}" value="${escapeHtml(v)}" ${f.min != null ? `min="${f.min}"` : ''} ${f.max != null ? `max="${f.max}"` : ''} ${f.type === 'number' ? 'step="any" inputmode="decimal"' : ''}>`;
+  return `<div class="field ${f.full ? 'full' : ''}"><label for="${id}">${f.label}${f.required ? ' *' : ''}</label>${input}${f.hint ? `<div class="hint">${f.hint}</div>` : ''}</div>`;
+}
+
+function openForm(title, fields, values, statusOptions, onSave){
+  document.getElementById('formTitle').textContent = title;
+  document.getElementById('formFields').innerHTML = fields.map(f => fieldHtml(f, values[f.k], statusOptions)).join('');
+  document.getElementById('formErr').textContent = '';
+  formSubmit = () => {
+    const out = {};
+    for(const f of fields){
+      let v = document.getElementById('f_' + f.k).value;
+      v = f.type === 'number' ? (v === '' ? '' : Number(v)) : v.trim();
+      if(f.required && v === ''){ document.getElementById('formErr').textContent = `حقل «${f.label}» مطلوب.`; return; }
+      if(f.type === 'number' && v !== '' && ((f.min != null && v < f.min) || (f.max != null && v > f.max))){ document.getElementById('formErr').textContent = `«${f.label}» يجب أن يكون بين ${f.min} و ${f.max}.`; return; }
+      out[f.k] = v;
+    }
+    onSave(out); closeForm();
+  };
+  overlay.classList.add('show');
+  const first = overlay.querySelector('input,select,textarea'); if(first) first.focus();
+}
+document.getElementById('form').addEventListener('submit', ev => { ev.preventDefault(); if(formSubmit) formSubmit(); });
+
+function openProjectForm(p){
+  const fields = projectFields();
+  const values = p || Object.fromEntries(fields.filter(f => f.def).map(f => [f.k, f.def]));
+  if(!p) values.engineer = sessionName;
+  openForm(p ? 'تعديل المشروع' : 'مشروع إشراف جديد', fields, values, null, data => {
+    const base = p || {id:uid(), ts:Date.now(), createdBy:sessionName, stageHistory:[]};
+    const history = (base.stageHistory || []).slice();
+    if(data.stage && data.stage !== base.stage) history.push({stage:data.stage, date:todayStr(), by:sessionName});
+    const obj = Object.assign({}, base, data, {stageHistory:history, updatedAt:Date.now(), updatedBy:sessionName});
+    putDoc('sv_projects', obj);
+    if(!p) openProject(obj.id);
+  });
+}
+
+function nextRef(pid, kind){
+  const def = KINDS[kind];
+  const nums = projectRecords(pid, kind).map(r => parseInt(String(r.refNo || '').replace(/\D/g, ''), 10)).filter(n => !isNaN(n));
+  return def.prefix + '-' + String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, '0');
+}
+
+function openRecordForm(p, kind, rec){
+  const def = KINDS[kind];
+  let values = rec;
+  if(!rec){
+    values = {};
+    def.fields.forEach(f => {
+      if(f.auto) values[f.k] = nextRef(p.id, kind);
+      else if(f.today) values[f.k] = todayStr();
+      else if(f.me) values[f.k] = sessionName;
+      else if(f.def) values[f.k] = f.def;
+    });
+  }
+  openForm((rec ? 'تعديل ' : 'إضافة ') + def.single, def.fields, values, def.status, data => {
+    putDoc('sv_records', Object.assign({}, rec || {id:uid(), ts:Date.now(), projectId:p.id, kind, createdBy:sessionName}, data, {updatedAt:Date.now()}));
+  });
+}
+
+document.getElementById('fab').addEventListener('click', () => openProjectForm(null));
+
+/* ===================== أوزان المراحل ===================== */
+document.getElementById('stagesBtn').addEventListener('click', () => {
+  document.getElementById('formTitle').textContent = 'أوزان مراحل الرقابة المركزية';
+  const row = (s, i) => `<div class="stage-row"><span class="mono" style="width:20px">${i + 1}</span><input type="text" value="${escapeHtml(s.name)}" data-k="name"><input type="number" min="0" max="100" step="any" value="${s.weight}" data-k="weight"><span>%</span></div>`;
+  document.getElementById('formFields').innerHTML = `<div class="field full">
+    <div class="hint" style="margin-bottom:8px">نسبة أعمال المشروع = النسبة التراكمية للمرحلة الحالية. يجب أن يكون مجموع الأوزان 100%. تغيير اسم مرحلة يحدّث المشاريع المرتبطة بها تلقائياً.</div>
+    <div id="stageRows">${stages.map(row).join('')}</div>
+    <div class="meta" id="stageSum" style="margin-top:6px"></div>
+    <button type="button" class="btn small" id="resetStages" style="margin-top:8px">استعادة الأوزان الافتراضية</button></div>`;
+  const updSum = () => {
+    const sum = [...document.querySelectorAll('#stageRows [data-k=weight]')].reduce((s, el) => s + (Number(el.value) || 0), 0);
+    const ok = Math.abs(sum - 100) < 0.01;
+    document.getElementById('stageSum').innerHTML = `المجموع: <b class="mono" style="color:${ok ? 'var(--green)' : 'var(--red)'}">${+sum.toFixed(2)}%</b> ${ok ? '✔ سليم' : '— يجب أن يساوي 100%'}`;
+    return ok;
+  };
+  document.getElementById('stageRows').addEventListener('input', updSum);
+  document.getElementById('resetStages').addEventListener('click', () => { document.getElementById('stageRows').innerHTML = DEFAULT_STAGES.map(row).join(''); updSum(); });
+  updSum();
+  document.getElementById('formErr').textContent = '';
+  formSubmit = () => {
+    if(!updSum()){ document.getElementById('formErr').textContent = 'مجموع الأوزان يجب أن يساوي 100%.'; return; }
+    const rows = [...document.querySelectorAll('#stageRows .stage-row')].map(r => ({name:r.querySelector('[data-k=name]').value.trim(), weight:Number(r.querySelector('[data-k=weight]').value) || 0}));
+    if(rows.some(r => !r.name)){ document.getElementById('formErr').textContent = 'اسم المرحلة لا يمكن أن يكون فارغاً.'; return; }
+    if(new Set(rows.map(r => r.name)).size !== rows.length){ document.getElementById('formErr').textContent = 'أسماء المراحل يجب ألا تتكرر.'; return; }
+    const renamed = [];
+    stages.forEach((s, i) => { if(rows[i] && rows[i].name !== s.name) renamed.push([s.name, rows[i].name]); });
+    const changed = projects.filter(p => renamed.some(([o]) => p.stage === o)).map(p => Object.assign({}, p, {stage:renamed.find(([o]) => o === p.stage)[1], updatedAt:Date.now()}));
+    saveStages(rows);
+    if(changed.length) putMany('sv_projects', changed);
+    closeForm();
+  };
+  overlay.classList.add('show');
+});
+
+/* ===================== Excel: تصدير واستيراد بنفس أعمدة ملف المتابعة ===================== */
+const XLSX_COLUMNS = [
+  ['name', 'اسم المشروع'], ['owner', 'الجهة'], ['code', 'رقم المشروع'], ['account', 'المستخدم'], ['license', 'رقم الرخصة'],
+  ['request', 'رقم الطلب'], ['service', 'رقم الخدمة'], ['stage', 'المرحلة'], ['__pct', 'نسبة الأعمال'], ['stageNote', 'ملاحظات'],
+  ['status', 'الحالة'], ['invoiceType', 'نوع المستخلص'], ['notes', 'ملاحظات عامة'], ['__stageNo', 'رقم المرحلة'], ['__check', 'فحص البيانات'],
+  ['override', 'تعديل يدوي للنسبة (اختياري)'], ['engineer', 'المهندس المسؤول']
+];
+
+function exportXlsx(list){
+  if(!window.XLSX){ alert('تعذّر تحميل مكتبة Excel، تأكد من الاتصال بالإنترنت.'); return; }
+  const rows = list.map((p, i) => {
+    const st = projectStats(p);
+    const row = {'م':i + 1};
+    XLSX_COLUMNS.forEach(([k, h]) => {
+      row[h] = k === '__pct' ? st.pct / 100 : k === '__stageNo' ? (st.idx >= 0 ? st.idx + 1 : '؟') : k === '__check' ? (st.check ? '⚠ ' + st.check : '✔ مكتمل')
+        : k === 'override' ? (p.override === '' || p.override == null ? '' : p.override / 100) : (p[k] == null ? '' : p[k]);
+    });
+    return row;
+  });
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:4}, {wch:48}, {wch:28}, {wch:12}, {wch:11}, {wch:14}, {wch:13}, {wch:13}, {wch:44}, {wch:10}, {wch:34}, {wch:11}, {wch:13}, {wch:44}, {wch:10}, {wch:16}, {wch:12}, {wch:18}];
+  ws['!views'] = [{RTL:true}];
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for(let r = 1; r <= range.e.r; r++) [9, 16].forEach(c => { const cell = ws[XLSX.utils.encode_cell({r, c})]; if(cell && typeof cell.v === 'number') cell.z = '0%'; });
+  XLSX.utils.book_append_sheet(wb, ws, 'مشاريع الإشراف');
+
+  const stageRows = stages.map((s, i) => ({'م':i + 1, 'المرحلة':s.name, 'وزن المرحلة':s.weight / 100, 'النسبة التراكمية':stageCumulative(i) / 100, 'عدد المشاريع':list.filter(p => p.stage === s.name).length}));
+  const ws2 = XLSX.utils.json_to_sheet(stageRows);
+  ws2['!cols'] = [{wch:4}, {wch:52}, {wch:12}, {wch:14}, {wch:12}];
+  ws2['!views'] = [{RTL:true}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'مراحل الرقابة المركزية');
+
+  const ids = new Set(list.map(p => p.id));
+  const recs = records.filter(r => ids.has(r.projectId) && KINDS[r.kind]).map(r => {
+    const def = KINDS[r.kind];
+    return {'المشروع':(list.find(p => p.id === r.projectId) || {}).name, 'السجل':def.single, 'الرقم':r.refNo, 'التاريخ':r.date, 'البيان':r.title,
+      'الحالة':def.status && def.status[r.status] ? def.status[r.status].label : '', 'المبلغ':r.amount || '', 'ملاحظات':r.notes || r.issues || r.action || '', 'بواسطة':r.createdBy || ''};
+  });
+  if(recs.length){
+    const ws3 = XLSX.utils.json_to_sheet(recs);
+    ws3['!cols'] = [{wch:44}, {wch:14}, {wch:10}, {wch:11}, {wch:50}, {wch:14}, {wch:12}, {wch:40}, {wch:16}];
+    ws3['!views'] = [{RTL:true}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'سجلات المتابعة');
+  }
+  XLSX.writeFile(wb, (list.length === 1 ? list[0].name.slice(0, 60) : 'لوحة متابعة مشاريع الإشراف') + ' - ' + todayStr() + '.xlsx');
+}
+document.getElementById('exportBtn').addEventListener('click', () => {
+  if(!projects.length){ alert('لا توجد مشاريع للتصدير.'); return; }
+  exportXlsx(projects.slice().sort((a, b) => (a.ts || 0) - (b.ts || 0)));
+});
+
+document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', async ev => {
+  const file = ev.target.files[0]; ev.target.value = '';
+  if(!file) return;
+  if(!window.XLSX){ alert('تعذّر تحميل مكتبة Excel، تأكد من الاتصال بالإنترنت.'); return; }
+  try{
+    const wb = XLSX.read(await file.arrayBuffer());
+    const map = {name:'اسم المشروع', owner:'الجهة', code:'رقم المشروع', account:'المستخدم', license:'رقم الرخصة', request:'رقم الطلب', service:'رقم الخدمة', stage:'المرحلة', stageNote:'ملاحظات', status:'الحالة', invoiceType:'نوع المستخلص', notes:'ملاحظات عامة', engineer:'المهندس المسؤول'};
+    const known = new Set(Object.values(map));
+    // نختار صف العناوين الأكثر تطابقاً مع أعمدة ملف المتابعة (ورقة لوحة المتابعة فيها عناوين مشابهة جزئياً)
+    let found = null;
+    for(const name of wb.SheetNames){
+      const grid = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:''});
+      grid.slice(0, 30).forEach((r, hi) => {
+        const cells = r.map(c => String(c).trim());
+        if(!cells.includes('اسم المشروع') || !cells.includes('المرحلة')) return;
+        const score = cells.filter(c => known.has(c)).length;
+        if(!found || score > found.score) found = {grid, hi, score};
+      });
+    }
+    if(!found){ alert('لم يتم العثور على ورقة بأعمدة «اسم المشروع» و«المرحلة».'); return; }
+    const header = found.grid[found.hi].map(c => String(c).trim());
+    const col = h => header.indexOf(h);
+    const overrideCol = header.findIndex(h => h.startsWith('تعديل يدوي'));
+    const incoming = [];
+    for(const r of found.grid.slice(found.hi + 1)){
+      const p = {};
+      Object.entries(map).forEach(([k, h]) => { const c = col(h); if(c >= 0) p[k] = String(r[c] == null ? '' : r[c]).trim(); });
+      if(!p.name) continue;
+      if(overrideCol >= 0 && r[overrideCol] !== ''){ const v = Number(r[overrideCol]); if(!isNaN(v)) p.override = v <= 1 ? +(v * 100).toFixed(2) : v; }
+      incoming.push(p);
+    }
+    if(!incoming.length){ alert('لا توجد صفوف مشاريع في الملف.'); return; }
+    // التحديث بالمطابقة على رقم الرخصة + رقم المشروع، وإلا إضافة كمشروع جديد
+    const keyOf = p => [p.code, p.license].map(v => blank(v) ? '' : String(v)).join('|') + (blank(p.license) ? '|' + p.name : '');
+    const existing = new Map(projects.map(p => [keyOf(p), p]));
+    const updated = [], added = [];
+    const now = Date.now();
+    incoming.forEach((p, i) => {
+      const old = existing.get(keyOf(p));
+      if(old){
+        const history = (old.stageHistory || []).slice();
+        if(p.stage && p.stage !== old.stage) history.push({stage:p.stage, date:todayStr(), by:sessionName});
+        updated.push(Object.assign({}, old, p, {stageHistory:history, updatedAt:now, updatedBy:sessionName}));
+      } else {
+        added.push(Object.assign({id:uid(), ts:now + i, createdBy:sessionName, stageHistory:p.stage ? [{stage:p.stage, date:todayStr(), by:sessionName}] : []}, p, {updatedAt:now, updatedBy:sessionName}));
+      }
+    });
+    if(!confirm(`سيتم تحديث ${updated.length} مشروع وإضافة ${added.length} مشروع جديد. متابعة؟`)) return;
+    await putMany('sv_projects', updated.concat(added));
+    alert('تم الاستيراد بنجاح.');
+  }catch(e){ alert('تعذّر قراءة الملف: ' + e.message); }
+});
+
+/* ===================== العرض ===================== */
+function render(){
+  const inDetail = !!currentProjectId && projects.some(p => p.id === currentProjectId);
+  if(!inDetail) currentProjectId = null;
+  document.getElementById('listView').style.display = inDetail ? 'none' : '';
+  document.getElementById('detailView').style.display = inDetail ? '' : 'none';
+  document.getElementById('fab').style.display = inDetail ? 'none' : '';
+  if(inDetail) renderDetail(); else renderList();
+}
+
+/* ===================== الدخول ===================== */
+async function getTeamPassword(){
+  if(!db) return DEFAULT_TEAM_PASSWORD;
+  try{
+    const doc = await db.collection('meta').doc('config').get();
+    return (doc.exists && doc.data().teamPassword) || DEFAULT_TEAM_PASSWORD;
+  }catch(e){ return DEFAULT_TEAM_PASSWORD; }
+}
+
+async function attemptLogin(){
+  const btn = document.getElementById('gateBtn');
+  btn.disabled = true; btn.textContent = 'جارٍ التحقق...';
+  const correct = await getTeamPassword();
+  btn.disabled = false; btn.textContent = 'دخول';
+  const input = document.getElementById('gatePass');
+  if(input.value === correct){
+    document.getElementById('gateStep1').style.display = 'none';
+    document.getElementById('gateStep2').style.display = 'block';
+    let saved = '';
+    try{ saved = localStorage.getItem('sv_user') || ''; }catch(e){}
+    const nameEl = document.getElementById('gateName'); nameEl.value = saved; nameEl.focus();
+  } else {
+    document.getElementById('gateErr').textContent = 'كلمة السر غير صحيحة.';
+    input.value = ''; input.focus();
+  }
+}
+
+function attemptName(){
+  const name = document.getElementById('gateName').value.trim();
+  if(name.length < 2){ document.getElementById('gateNameErr').textContent = 'من فضلك اكتب اسمك.'; return; }
+  sessionName = name;
+  try{ localStorage.setItem('sv_user', name); }catch(e){}
+  document.getElementById('userLabel').textContent = ' · ' + name;
+  document.getElementById('gateOverlay').style.display = 'none';
+  document.body.classList.remove('locked');
+  subscribeData();
+}
+
+document.getElementById('gateBtn').addEventListener('click', attemptLogin);
+document.getElementById('gatePass').addEventListener('keydown', ev => { if(ev.key === 'Enter') attemptLogin(); });
+document.getElementById('gateNameBtn').addEventListener('click', attemptName);
+document.getElementById('gateName').addEventListener('keydown', ev => { if(ev.key === 'Enter') attemptName(); });
+document.getElementById('gatePass').focus();
+</script>
+</body>
+</html>
