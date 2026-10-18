@@ -11,7 +11,7 @@
 | `supabase/migrations/…03_logic.sql` | الحسابات، والتدقيق، ومنع التعارض، والتحديث المتسلسل، والملخص اليومي، والتقرير الأسبوعي |
 | `supabase/migrations/…04_platform.sql` | ربط الحسابات، وStorage، وRealtime، وpg_cron |
 | `supabase/seed.sql` | قائمة مراجع الكود والإعدادات الافتراضية |
-| `supabase/tests/` | 140 اختباراً آلياً للصلاحيات والمنطق: `supabase/tests/run_local.sh` |
+| `supabase/tests/` | 140 اختباراً آلياً للصلاحيات والمنطق: `supabase/sql-tests/run_local.sh` |
 
 ## التقنية: كما في البرومت، بلا تغيير
 
@@ -92,7 +92,7 @@ erDiagram
 ## الاختبارات
 
 ```bash
-supabase/tests/run_local.sh     # Postgres 16 مؤقت + المهاجرات + 140 اختباراً
+supabase/sql-tests/run_local.sh     # Postgres 16 مؤقت + المهاجرات + 140 اختباراً
 ```
 
 تتحقق الاختبارات من:

@@ -9,5 +9,5 @@
 ## تشغيل اختبارات قاعدة البيانات
 
 ```bash
-supabase/tests/run_local.sh
+supabase/sql-tests/run_local.sh
 ```

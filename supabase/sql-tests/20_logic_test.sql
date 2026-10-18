@@ -200,3 +200,31 @@ select tests.ok((select snapshot <> '{}'::jsonb and status = 'approved' from pub
 -- =====================================================================
 select tests.ok((select load_pct = 50 from public.v_engineer_load where engineer_id = 'e_pm'), 'engineer load counts active assignments only');
 select tests.ok((select load_pct = 0 from public.v_engineer_load where engineer_id = 'e_old'), 'expired assignment not in load');
+
+-- =====================================================================
+-- RPCs: حفظ المراحل، توليد/إرسال التقرير
+-- =====================================================================
+select tests.login('admin');
+select public.save_stages((select jsonb_agg(jsonb_build_object('id', id, 'name', name, 'sort_order', sort_order,
+  'weight', case id when 'st01' then 4 when 'st02' then 6 else weight end, 'is_pour_gate', is_pour_gate)) from public.stages));
+select tests.ok((select weight = 4 from public.stages where id = 'st01'), 'admin saves stage weights atomically');
+select tests.throws($q$select public.save_stages('[{"id":"st01","name":"x","sort_order":1,"weight":50}]'::jsonb)$q$,
+                    '23503', 'cannot drop stages that projects use');
+select tests.throws($q$select public.save_stages((select jsonb_agg(jsonb_build_object('id', id, 'name', name, 'sort_order', sort_order, 'weight', 1)) from public.stages))$q$,
+                    '23514', 'weights not totalling 100 rejected in save_stages');
+select tests.logout();
+select tests.login('dept');
+select tests.throws($q$select public.save_stages('[]'::jsonb)$q$, '42501', 'only admin edits stages');
+select tests.logout();
+
+select tests.login('eng_a');
+select tests.throws($q$select public.generate_weekly_report('A')$q$, '42501', 'engineer cannot generate report');
+select tests.logout();
+select tests.login('pm_a');
+select tests.ok(public.generate_weekly_report('A', app.today() + 7) is not null, 'pm generates next week draft');
+select tests.throws($q$select public.generate_weekly_report('B')$q$, '42501', 'pm cannot generate for other project');
+select public.send_weekly_report('rep_a_draft');
+select tests.logout();
+select tests.ok((select status = 'sent' from public.weekly_reports where id = 'rep_a_draft'), 'approved report sent');
+select tests.ok(exists (select 1 from public.notifications where kind = 'report_sent'
+                        and user_id = (select id from tests.users where name = 'owner_a')), 'owner notified on send');

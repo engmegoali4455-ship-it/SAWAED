@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* هوية سواعد */
+@theme {
+  --color-paper: #f1eee9;
+  --color-card: #ffffff;
+  --color-ink: #231f1c;
+  --color-ink-soft: #726a62;
+  --color-line: #e0dad2;
+  --color-brand: #e85e30;
+  --color-brand-text: #c94a22;
+  --color-head: #221f1d;
+  --color-amber: #9a6e10;
+  --color-amber-bg: #f6e8c9;
+  --color-green: #3f7a52;
+  --color-green-bg: #deebe1;
+  --color-red: #b23b2c;
+  --color-red-bg: #f5dad3;
+  --font-sans: var(--font-plex-arabic), 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+html, body { background: var(--color-paper); color: var(--color-ink); }
+body { font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+input, select, textarea, button { font: inherit; }
+/* حجم 16px يمنع التكبير التلقائي في iOS */
+.field { width: 100%; min-width: 0; font-size: 16px; padding: 9px 11px; border: 1px solid var(--color-line); border-radius: 6px; background: #fff; color: var(--color-ink); }
+.field:focus { outline: 2px solid var(--color-brand); outline-offset: -1px; }
+.recharts-wrapper, .ltr { direction: ltr; }
+.safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom) + 72px); }
+@media (min-width: 1024px) { .safe-bottom { padding-bottom: 24px; } }
+@media print { .no-print { display: none !important; } body { background: #fff; } }

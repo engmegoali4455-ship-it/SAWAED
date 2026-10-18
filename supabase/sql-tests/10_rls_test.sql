@@ -1,4 +1,5 @@
 -- اختبارات الصلاحيات (RLS). كل كتلة تبدأ بـ login وتنتهي بـ logout.
+insert into public.app_settings (key, value) values ('push_secret', '"s3cret"');
 \set QUIET on
 set client_min_messages = notice;
 
@@ -168,4 +169,21 @@ select tests.logout();
 select tests.login('pm_a');
 select tests.ok(tests.affected('update public.notifications set read_at = now()') = 1, 'owner marks notification read');
 select tests.throws($q$update public.notifications set title = 'x'$q$, '42501', 'only read_at is updatable');
+select tests.logout();
+
+-- =====================================================================
+-- 8) البيانات الأساسية للمشروع لمدير القسم فقط
+-- =====================================================================
+select tests.login('pm_a');
+select tests.throws($q$update public.projects set license_no = 'X-9', version = version where id = 'A'$q$,
+                    '42501', 'pm cannot change project master data');
+select tests.ok(tests.affected($q$update public.projects set status = 'ending_soon', version = version where id = 'A'$q$) = 1,
+                'pm can change project status');
+select tests.logout();
+select tests.login('dept');
+select tests.ok(tests.affected($q$update public.projects set license_no = 'X-9', status = 'ongoing', version = version where id = 'A'$q$) = 1,
+                'dept manager changes master data');
+select tests.logout();
+select tests.login('eng_a');
+select tests.ok(tests.count($q$select 1 from public.app_settings where key = 'push_secret'$q$) = 0, 'push secret hidden from users');
 select tests.logout();

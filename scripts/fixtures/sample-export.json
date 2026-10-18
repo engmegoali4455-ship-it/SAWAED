@@ -1,0 +1,69 @@
+{
+  "stages": [
+    {"id": "s1", "name": "التجهيز والحفر", "weight": 5, "order": 1},
+    {"id": "s2", "name": "الإحلال والردم", "weight": 5, "order": 2},
+    {"id": "s3", "name": "الأساسات", "weight": 10, "order": 3},
+    {"id": "s4", "name": "الرقاب والميدات", "weight": 10, "order": 4},
+    {"id": "s5", "name": "الهيكل الإنشائي", "weight": 20, "order": 5},
+    {"id": "s6", "name": "المباني", "weight": 10, "order": 6},
+    {"id": "s7", "name": "التمديدات", "weight": 10, "order": 7},
+    {"id": "s8", "name": "اللياسة والعزل", "weight": 10, "order": 8},
+    {"id": "s9", "name": "التشطيبات", "weight": 10, "order": 9},
+    {"id": "s10", "name": "الواجهات والموقع العام", "weight": 5, "order": 10},
+    {"id": "s11", "name": "التسليم", "weight": 5, "order": 11}
+  ],
+  "deptManagers": [{"id": "dm1", "name": "م. خالد العتيبي", "email": "khaled@sawaed.sa", "department": "المعمارية"}],
+  "projects": [
+    {"id": "p1", "name": "فيلا الياسمين", "owner": "أ. سعد القحطاني", "projectNo": "SW-2026-014", "department": "المعمارية",
+     "licenseNo": "4400123", "requestNo": "R-778", "serviceNo": "S-221", "status": "استمرار", "stage": "s3",
+     "stageDetail": "تسليح القواعد", "supervisionMode": "طاقم كامل", "invoiceType": "شهري"},
+    {"id": "p2", "name": "عمارة النرجس", "owner": "شركة الأفق", "projectNo": "SW-2026-020", "department": "الاستشارات",
+     "status": "قريباً ينتهي", "stage": "التشطيبات", "supervisionMode": "زيارات"},
+    {"id": "p3", "owner": "بدون اسم"}
+  ],
+  "engineers": [
+    {"id": "e1", "name": "م. فهد الشهري", "specialty": "مدني", "classification": "مهندس محترف", "membershipNo": "123456",
+     "membershipExpiry": "15/11/2026", "mobile": "0500000001", "email": "fahad@sawaed.sa"},
+    {"id": "e2", "name": "م. ريم الدوسري", "specialty": "معماري", "membershipExpiry": "2027-05-01"}
+  ],
+  "assignments": [
+    {"id": "a1", "engineerId": "e1", "projectId": "p1", "role": "مدير مشروع الإشراف", "allocation": "50%", "from": "2026-01-01"},
+    {"id": "a2", "engineerId": "e2", "projectId": "p1", "role": "مهندس مقيم", "allocation": 100, "from": "2026-01-01"},
+    {"id": "a3", "engineerId": "e2", "projectId": "p2", "role": "مهندس زيارات", "allocation": 30},
+    {"id": "a4", "engineerId": "e9", "projectId": "p1", "role": "مهندس إشراف"}
+  ],
+  "updates": [
+    {"id": "u1", "projectId": "p1", "date": "2026-10-12", "stage": "s3", "status": "استمرار", "done": "صب النظافة",
+     "plan": "تسليح القواعد", "obstacles": "تأخر الحديد", "labor": "14", "visits": 3,
+     "photos": [{"url": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==", "lat": 24.7, "lng": 46.6}]},
+    {"id": "u2", "projectId": "pX", "date": "2026-10-12"},
+    {"id": "u3", "projectId": "p2", "date": "not a date"}
+  ],
+  "works": [{"id": "w1", "projectId": "p1", "item": "حديد القواعد", "specialty": "إنشائي", "floor": "الأرضي",
+             "start": "2026-10-01", "end": "2026-10-20", "progress": "60", "contractor": "مؤسسة البناء"}],
+  "inspections": [
+    {"id": "i1", "projectId": "p1", "type": "طلب فحص", "stage": "s3", "description": "فحص تسليح القواعد قبل الصب",
+     "reference": "SBC 304", "to": "المقاول", "status": "مقبول بملاحظات", "closeDate": "2026-10-14"},
+    {"id": "i2", "projectId": "p1", "type": "عدم مطابقة", "description": "غطاء خرساني غير كاف", "status": "مفتوح"}
+  ],
+  "meetings": [{"id": "m1", "projectId": "p1", "type": "أسبوعي", "date": "2026-10-13", "number": "7", "location": "الموقع",
+                "attendees": "م. فهد، المقاول، المالك", "agenda": "متابعة التوريد", "decisions": "تسريع الحديد",
+                "actions": [{"item": "جدول توريد الحديد", "owner": "المقاول", "due": "2026-10-16", "status": "مفتوح"}, {"owner": "x"}]}],
+  "violations": [
+    {"id": "v1", "projectId": "p1", "category": "السلامة", "severity": "جسيمة", "violator": "المقاول",
+     "description": "عمل على ارتفاع بدون حزام", "deadline": "2026-10-15", "status": "مفتوحة"},
+    {"id": "v2", "projectId": "p1", "category": "شيء آخر", "description": "x"}
+  ],
+  "risks": [
+    {"id": "r1", "projectId": "p1", "title": "تأخر توريد الحديد", "probability": 3, "impact": 5, "owner": "المقاول", "status": "مفتوحة"},
+    {"id": "r2", "projectId": "p1", "title": "خارج النطاق", "probability": 7, "impact": 2}
+  ],
+  "permits": [
+    {"id": "pe1", "projectId": "p1", "type": "رخصة بناء", "number": "4400123", "issueDate": "2025-11-01", "expiryDate": "2026-11-15"},
+    {"id": "pe2", "projectId": "p2", "type": "موافقة الدفاع المدني", "expiryDate": "2027-01-01"}
+  ],
+  "invoices": [
+    {"id": "inv1", "projectId": "p1", "number": "3", "type": "شهري", "period": "2026-09-01 - 2026-09-30", "amount": "25,000", "status": "مقدم"},
+    {"id": "inv2", "projectId": "p2", "number": "8", "amount": 40000, "status": "مدفوع"}
+  ]
+}
