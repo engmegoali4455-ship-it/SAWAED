@@ -21,7 +21,7 @@
 }
 
 html, body { background: var(--color-paper); color: var(--color-ink); }
-body { font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
+body { font-family: var(--font-sans); -webkit-tap-highlight-color: transparent; }
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
 input, select, textarea, button { font: inherit; }
 /* حجم 16px يمنع التكبير التلقائي في iOS */
