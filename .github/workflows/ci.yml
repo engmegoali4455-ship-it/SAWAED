@@ -1,0 +1,56 @@
+name: CI
+on:
+  push:
+  pull_request:
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - run: npm run build
+      # اختبارات RLS والمنطق على PostgreSQL 16 المثبت في المشغّل
+      - run: PGBIN=/usr/lib/postgresql/16/bin supabase/sql-tests/run_local.sh
+
+  e2e:
+    needs: checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: supabase/setup-cli@v1
+        with: { version: latest }
+      - run: npm ci
+      - run: supabase start
+      - name: Import sample data and demo accounts
+        run: |
+          eval "$(supabase status -o env | sed 's/^/export /')"
+          export SUPABASE_DB_URL="$DB_URL" SUPABASE_URL="$API_URL" SUPABASE_SERVICE_ROLE_KEY="$SERVICE_ROLE_KEY"
+          npx tsx scripts/import-export.ts scripts/fixtures/sample-export.json
+          npx tsx scripts/dev-seed-users.ts
+          SUPABASE_ANON_KEY="$ANON_KEY" SUPABASE_IT=1 npx vitest run src/lib/sync.integration.test.ts
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+          } > .env.local
+          {
+            echo "SUPABASE_URL=$API_URL"; echo "SUPABASE_ANON_KEY=$ANON_KEY"; echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+      - name: Serve Edge Functions
+        run: |
+          cp supabase/functions/.env.example supabase/functions/.env
+          sed -i 's/^PUSH_SECRET=.*/PUSH_SECRET=ci-secret/' supabase/functions/.env
+          nohup supabase functions serve --env-file supabase/functions/.env > functions.log 2>&1 &
+          echo "RENDER_PDF_URL=$SUPABASE_URL/functions/v1/render-pdf" >> "$GITHUB_ENV"
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: e2e-results, path: test-results/, if-no-files-found: ignore }

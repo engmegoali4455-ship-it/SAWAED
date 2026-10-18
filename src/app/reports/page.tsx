@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { AppShell } from '@/components/shell';
 import { Badge, Btn, Card, DualDate, Empty, PageTitle, Row, Spinner } from '@/components/ui';
@@ -14,6 +15,7 @@ export default function ReportsPage() {
 }
 
 function Inner() {
+  const router = useRouter();
   const s = useSession();
   const d = useAllData();
   const [busy, setBusy] = useState<string | null>(null);
@@ -31,7 +33,7 @@ function Inner() {
     setBusy(null);
     if (error) return setErr(navigator.onLine ? error.message : 'التوليد يتطلب اتصالاً بالإنترنت');
     await syncNow();
-    location.assign(`/report/?id=${data}`);
+    router.push(`/report/?id=${data}`);
   }
 
   return (

@@ -1,0 +1,62 @@
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Sawaed Supervision",
+  "version": "1.0.0",
+  "identifier": "sa.sawaed.supervision",
+  "build": {
+    "frontendDist": "../out",
+    "devUrl": "http://localhost:3000",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "سواعد للإشراف الهندسي",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 360,
+        "minHeight": 600,
+        "resizable": true,
+        "center": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "msi",
+      "nsis",
+      "dmg",
+      "app",
+      "deb",
+      "appimage"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "android": {
+      "debugApplicationIdSuffix": ".debug"
+    },
+    "publisher": "Sawaed Engineering Consultants",
+    "shortDescription": "إدارة مشاريع الإشراف الهندسي",
+    "category": "Business",
+    "windows": {
+      "nsis": {
+        "languages": [
+          "Arabic",
+          "English"
+        ],
+        "displayLanguageSelector": false
+      }
+    }
+  },
+  "mainBinaryName": "sawaed-supervision"
+}

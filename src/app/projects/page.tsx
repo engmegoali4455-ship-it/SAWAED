@@ -1,4 +1,5 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { EntityForm } from '@/components/entity-form';
 import { AppShell } from '@/components/shell';
@@ -14,6 +15,7 @@ export default function ProjectsPage() {
 }
 
 function Inner() {
+  const router = useRouter();
   const s = useSession();
   const d = useAllData();
   const [q, setQ] = useState('');
@@ -66,7 +68,7 @@ function Inner() {
         </Card>
       )}
       <Modal open={adding} onClose={() => setAdding(false)} title="مشروع جديد" wide>
-        <EntityForm table="projects" onDone={(id) => { setAdding(false); if (id) location.assign(`/project/?id=${id}`); }} />
+        <EntityForm table="projects" onDone={(id) => { setAdding(false); if (id) router.push(`/project/?id=${id}`); }} />
       </Modal>
     </>
   );

@@ -16,3 +16,4 @@ android/.gradle/
 ios/App/Pods/
 src-tauri/target/
 supabase/functions/.certs/
+src-tauri/gen/

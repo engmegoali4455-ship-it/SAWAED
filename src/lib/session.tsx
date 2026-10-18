@@ -76,7 +76,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       ready, session, userId, email: session?.user.email ?? null, profile, isAdmin, isDeptManager, isGlobal,
       engineer, activeAssignments, projectRole, canWrite, canDelete, canManageProject: canDelete,
       isExternal: !isGlobal && !activeAssignments.length && externals.length > 0,
-      signOut: async () => { await wipeLocal(); await supabase().auth.signOut(); location.href = '/login/'; },
+      signOut: async () => { await wipeLocal(); await supabase().auth.signOut(); },
     };
   }, [ready, session, profile, deptRow, engineer, assignments, externals]);
 
